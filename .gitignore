@@ -1,0 +1,105 @@
+# ==========================
+# Visual Studio / Rider / IDE
+# ==========================
+.vs/
+.vscode/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.ncrunch*
+*.dotCover
+_ReSharper*/
+*.DotSettings.user
+
+# ==========================
+# Build results
+# ==========================
+bin/
+obj/
+out/
+TestResults/
+build/
+publish/
+*.cache
+
+# ==========================
+# NuGet
+# ==========================
+*.nupkg
+*.snupkg
+*.nuspec
+packages/
+.nuget/
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# ==========================
+# Rider
+# ==========================
+.idea/
+
+# ==========================
+# ASP.NET / Web API
+# ==========================
+wwwroot/
+node_modules/
+bower_components/
+*.log
+*.vspscc
+
+# ==========================
+# User-specific files
+# ==========================
+*.pidb
+*.userprefs
+
+# ==========================
+# OS generated files
+# ==========================
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msm
+*.msp
+
+# ==========================
+# Entity Framework / Migrations
+# ==========================
+# Ignore migrations if you plan to regenerate them
+
+*.Database.mdf
+*.Database_log.ldf
+
+# ==========================
+# Docker (if used)
+# ==========================
+docker-compose.override.yml
+docker-compose.override.*.yml
+*.env
+
+# ==========================
+# Clean Architecture specific
+# ==========================
+# Domain, Application, Infrastructure, WebAPI folders
+**/bin/
+**/obj/
+**/*.dll
+**/*.pdb
+**/*.exe
+**/*.cache
+**/*.log
+
+# ==========================
+# Secrets / Credentials
+# ==========================
+secrets.json
+*.pem
+*.key
+*.pfx
