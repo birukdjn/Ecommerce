@@ -6,8 +6,6 @@ namespace Infrastructure
     {
         public static IServiceCollection AddInfrastructure(this IServiceCollection services)
         {
-            var assembly = typeof(DependencyInjection).Assembly;
-
            
 
             return services;
