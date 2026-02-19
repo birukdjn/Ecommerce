@@ -6,8 +6,6 @@ using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
 
-
-
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 builder.Services
@@ -56,7 +54,7 @@ app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
-app.MapGroup("/auth").MapIdentityApi<ApplicationUser>();
+app.MapGroup("/api/auth").MapIdentityApi<ApplicationUser>();
 app.MapControllers();
 
 app.Run();
