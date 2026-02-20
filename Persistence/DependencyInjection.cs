@@ -1,11 +1,13 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Domain.Common.Interfaces;
+using Domain.Entities;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Persistence.Context;
-using Persistence.Identity;
 using Persistence.Options;
+using Persistence.Identity;
 
 
 namespace Persistence
@@ -16,6 +18,10 @@ namespace Persistence
             this IServiceCollection services,
             IConfiguration configuration)
         {
+            services.AddHttpContextAccessor();
+
+            services.AddScoped<ICurrentUserService, CurrentUserService>();
+
             services.AddOptions<DatabaseOptions>()
                 .Bind(configuration.GetSection("DatabaseOptions"))
                 .ValidateDataAnnotations()

@@ -1,8 +1,8 @@
 using Application;
 using Infrastructure;
 using Persistence;
-using Persistence.Identity;
 using Microsoft.OpenApi;
+using Domain.Entities;
 
 var builder = WebApplication.CreateBuilder(args);
 
