@@ -27,6 +27,7 @@ namespace Persistence
                 .ValidateDataAnnotations()
                 .ValidateOnStart();
 
+          
 
             services.AddDbContext<ApplicationDbContext>((sp, options) =>
             {
@@ -36,6 +37,10 @@ namespace Persistence
 
                 options.UseNpgsql(dbOptions.ConnectionString);
             });
+
+            services.AddScoped<IApplicationDbContext>(provider =>
+              provider.GetRequiredService<ApplicationDbContext>());
+
             services.ConfigureOptions<IdentityOptionsSetup>();
 
             services.AddIdentityApiEndpoints<ApplicationUser>()
