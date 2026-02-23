@@ -1,61 +1,28 @@
+using Api;
 using Application;
+using Domain.Entities;
 using Infrastructure;
 using Persistence;
-using Microsoft.OpenApi;
-using Domain.Entities;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
-builder.Services.AddOpenApi();
+
 builder.Services
-    .AddApplication()
-    .AddInfrastructure()
-    .AddPersistence(builder.Configuration);
+    .AddApiServices()
+    .AddApplicationServices()
+    .AddInfrastructureServices()
+    .AddPersistenceServices(builder.Configuration);
 
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(options =>
-{
-    options.SwaggerDoc("v1", new OpenApiInfo
-    {
-        Title = "Ecommerce API",
-        Version = "v1"
-    });
-
-
-    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-    {
-        In = ParameterLocation.Header,
-        Description = "Please enter token in this format: 'Bearer {your_token}'",
-        Name = "Authorization",
-        Type = SecuritySchemeType.ApiKey,
-        BearerFormat = "JWT",
-        Scheme = "Bearer"
-    });
-
-    options.AddSecurityRequirement(document=> new OpenApiSecurityRequirement
-    {
-        [new OpenApiSecuritySchemeReference("bearer", document)] = []
-
-    });
-});
 
 var app = builder.Build();
 
+app.UseApiMiddleware();
 
-if (app.Environment.IsDevelopment())
-{
-    app.MapOpenApi();
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.MapGroup("/api/auth")
+    .WithTags("Auth")
+    .MapIdentityApi<ApplicationUser>();
 
-app.UseHttpsRedirection();
-
-app.UseStaticFiles();
-app.UseAuthentication();
-app.UseAuthorization();
-app.MapGroup("/api/auth").MapIdentityApi<ApplicationUser>();
 app.MapControllers();
 
 app.Run();

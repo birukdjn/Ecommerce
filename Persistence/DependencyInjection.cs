@@ -14,7 +14,7 @@ namespace Persistence
 {
     public static class DependencyInjection
     {
-        public static IServiceCollection AddPersistence(
+        public static IServiceCollection AddPersistenceServices(
             this IServiceCollection services,
             IConfiguration configuration)
         {
