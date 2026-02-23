@@ -10,7 +10,7 @@ namespace Domain.Entities
         public required string Region { get; set; }
         public required string City { get; set; }
         public required string SpecialPlaceName { get; set; }
-        public bool IsDefault { get; set; }
+        public bool IsDefault { get; set; } = false;
 
     }
 }

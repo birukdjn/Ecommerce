@@ -66,6 +66,19 @@ namespace Persistence.Context
                 property.SetColumnType("decimal(18,2)");
             }
 
+            foreach (var entityType in builder.Model.GetEntityTypes())
+            {
+                if (typeof(BaseEntity).IsAssignableFrom(entityType.ClrType))
+                {
+                    builder.Entity(entityType.ClrType)
+                        .Property(nameof(BaseEntity.RowVersion))
+                        .HasColumnName("xmin") 
+                        .HasColumnType("xid")  
+                        .ValueGeneratedOnAddOrUpdate()
+                        .IsConcurrencyToken();
+                }
+            }
+
             // GLOBAL SOFT DELETE FILTER
             foreach (var entityType in builder.Model.GetEntityTypes())
             {

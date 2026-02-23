@@ -12,6 +12,8 @@ namespace Persistence.Configurations
                    .HasFilter("\"IsDefault\" = true")
                    .IsUnique();
 
+           
+
 
         }
     }

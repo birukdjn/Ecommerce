@@ -12,28 +12,26 @@ namespace Api
 
             services.AddEndpointsApiExplorer();
 
-            services.AddSwaggerGen(options => 
-            { 
-                options.SwaggerDoc("v1", new OpenApiInfo {Title = "Ecommerce API", Version = "v1"});
-                options.ResolveConflictingActions(apiDescriptions => apiDescriptions.First());
+            services.AddSwaggerGen(options =>
+            {
+                options.SwaggerDoc("v1", new OpenApiInfo { Title = "Ecommerce API", Version = "v1" });
 
-                options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                options.AddSecurityDefinition("bearer", new OpenApiSecurityScheme
                 {
-                    In = ParameterLocation.Header,
-                    Description = "Please enter token in this format: 'Bearer {your_token}'",
+                    Type = SecuritySchemeType.Http,
                     Name = "Authorization",
-                    Type = SecuritySchemeType.ApiKey,
+                    Scheme = "bearer",
                     BearerFormat = "JWT",
-                    Scheme = "Bearer"
+                    Description = "JWT Authorization header using the Bearer scheme."
                 });
 
                 options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
-                {
-                    [new OpenApiSecuritySchemeReference("bearer", document)] = []
 
+                {
+
+                    [new OpenApiSecuritySchemeReference("bearer", document)] = []
                 });
             });
-
 
             services.AddControllers();
             return services;
@@ -50,8 +48,16 @@ namespace Api
 
             if (app.Environment.IsDevelopment())
             {
-                app.UseSwagger();
-                app.UseSwaggerUI();
+                app.UseDeveloperExceptionPage();
+
+                app.UseSwagger(options =>
+                {
+                    options.OpenApiVersion = OpenApiSpecVersion.OpenApi3_1;
+                });
+                app.UseSwaggerUI(options =>
+                {
+                    options.SwaggerEndpoint("/swagger/v1/swagger.json", "MoviesStore V1");
+                });
             }
 
             app.UseHttpsRedirection();
