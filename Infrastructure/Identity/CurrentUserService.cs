@@ -2,7 +2,7 @@
 using Domain.Common.Interfaces;
 using Microsoft.AspNetCore.Http;
 
-namespace Persistence.Identity;
+namespace Infrastructure.Identity;
 
 public class CurrentUserService(IHttpContextAccessor httpContextAccessor) : ICurrentUserService
 {

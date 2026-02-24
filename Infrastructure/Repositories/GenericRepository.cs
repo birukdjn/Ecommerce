@@ -1,10 +1,10 @@
 ﻿using Domain.Common;
 using Domain.Common.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using Persistence.Context;
+using Infrastructure.Context;
 using System.Linq.Expressions;
 
-namespace Persistence.Repositories
+namespace Infrastructure.Repositories
 {
     public class GenericRepository<T>(ApplicationDbContext context) : IGenericRepository<T> where T : BaseEntity
     {

@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using System.Linq.Expressions;
 
-namespace Persistence.Context
+namespace Infrastructure.Context
 {
     public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>, IApplicationDbContext
     {

@@ -1,8 +1,8 @@
 ﻿using Domain.Common.Interfaces;
-using Persistence.Context;
+using Infrastructure.Context;
 using System.Collections;
 
-namespace Persistence.Repositories
+namespace Infrastructure.Repositories
 {
     public class UnitOfWork(ApplicationDbContext context) : IUnitOfWork
     {

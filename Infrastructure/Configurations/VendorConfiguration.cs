@@ -1,10 +1,8 @@
-﻿
-
-using Domain.Entities;
+﻿using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Persistence.Configurations
+namespace Infrastructure.Configurations
 {
     public class VendorConfiguration : IEntityTypeConfiguration<Vendor>
     {

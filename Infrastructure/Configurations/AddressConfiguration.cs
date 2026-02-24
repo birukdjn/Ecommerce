@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace Persistence.Configurations
+namespace Infrastructure.Configurations
 {
     public class AddressConfiguration : IEntityTypeConfiguration<Address>
     {
@@ -11,9 +11,6 @@ namespace Persistence.Configurations
             builder.HasIndex(a => new { a.UserId, a.IsDefault })
                    .HasFilter("\"IsDefault\" = true")
                    .IsUnique();
-
-           
-
 
         }
     }

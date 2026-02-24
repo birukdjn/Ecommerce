@@ -1,7 +1,7 @@
 ﻿
 using System.ComponentModel.DataAnnotations;
 
-namespace Persistence.Options
+namespace Infrastructure.Options
 {
     public class DatabaseOptions
     {

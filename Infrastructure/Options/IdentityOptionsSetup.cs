@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 
-namespace Persistence.Options
+namespace Infrastructure.Options
 {
     internal class IdentityOptionsSetup: IConfigureOptions<IdentityOptions>
     {

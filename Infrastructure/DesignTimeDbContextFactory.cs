@@ -1,9 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
-using Persistence.Context;
+using Infrastructure.Context;
 using Domain.Common.Interfaces;
 
-namespace Persistence;
+namespace Infrastructure;
 
 public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<ApplicationDbContext>
 {
