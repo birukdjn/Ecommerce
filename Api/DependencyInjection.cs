@@ -10,6 +10,8 @@ namespace Api
             services.AddExceptionHandler<GlobalExceptionHandler>();
             services.AddProblemDetails();
 
+            services.AddAuthentication().AddBearerToken();
+
             services.AddEndpointsApiExplorer();
 
             services.AddSwaggerGen(options =>

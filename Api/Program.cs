@@ -18,6 +18,19 @@ builder.Services
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        await IdentityDataSeeder.SeedRolesAsync(services);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"An error occurred seeding the DB: {ex.Message}");
+    }
+}
+
 app.UseApiMiddleware();
 
 app.MapGroup("/api/auth")
