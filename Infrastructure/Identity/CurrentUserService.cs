@@ -1,5 +1,6 @@
 ﻿using System.Security.Claims;
 using Domain.Common.Interfaces;
+using Domain.Constants;
 using Microsoft.AspNetCore.Http;
 
 namespace Infrastructure.Identity;
@@ -24,8 +25,8 @@ public class CurrentUserService(IHttpContextAccessor httpContextAccessor) : ICur
         _httpContextAccessor.HttpContext?.User?.Identity?.IsAuthenticated ?? false;
 
     public bool IsVendor() =>
-        _httpContextAccessor.HttpContext?.User?.IsInRole("Vendor") ?? false;
+        _httpContextAccessor.HttpContext?.User?.IsInRole(Roles.Vendor) ?? false;
 
     public bool IsAdmin() =>
-        _httpContextAccessor.HttpContext?.User?.IsInRole("Admin") ?? false;
+        _httpContextAccessor.HttpContext?.User?.IsInRole(Roles.Admin) ?? false;
 }

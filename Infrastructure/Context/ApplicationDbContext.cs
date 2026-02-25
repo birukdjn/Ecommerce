@@ -9,18 +9,11 @@ using System.Linq.Expressions;
 
 namespace Infrastructure.Context
 {
-    public class ApplicationDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>, IApplicationDbContext
+    public class ApplicationDbContext(
+        DbContextOptions<ApplicationDbContext> options,
+        ICurrentUserService currentUserService) : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>(options), IApplicationDbContext
     {
-        private readonly ICurrentUserService _currentUserService;
-        private readonly Guid? _currentVendorId;
-
-        public ApplicationDbContext(
-            DbContextOptions<ApplicationDbContext> options,
-            ICurrentUserService currentUserService) : base(options)
-        {
-            _currentUserService = currentUserService;
-            _currentVendorId = _currentUserService.GetCurrentVendorId();
-        }
+        private readonly ICurrentUserService _currentUserService = currentUserService;
 
         // Identity override
         public override DbSet<ApplicationUser> Users => base.Users;
@@ -72,8 +65,8 @@ namespace Infrastructure.Context
                 {
                     builder.Entity(entityType.ClrType)
                         .Property(nameof(BaseEntity.RowVersion))
-                        .HasColumnName("xmin") 
-                        .HasColumnType("xid")  
+                        .HasColumnName("xmin")
+                        .HasColumnType("xid")
                         .ValueGeneratedOnAddOrUpdate()
                         .IsConcurrencyToken();
                 }
@@ -89,12 +82,24 @@ namespace Infrastructure.Context
             }
 
             // LOGICAL MULTI-TENANCY FILTERS
+
             builder.Entity<SubOrder>()
-                .HasQueryFilter(so => !_currentVendorId.HasValue || so.VendorId == _currentVendorId);
+               .HasQueryFilter(p =>
+                   _currentUserService.IsAdmin() ||
+                   (!p.IsDeleted && (
+                       _currentUserService.GetCurrentVendorId() == null ||
+                       p.VendorId == _currentUserService.GetCurrentVendorId()
+                   ))
+               );
 
             builder.Entity<Product>()
-                .HasQueryFilter(p => !_currentVendorId.HasValue || p.VendorId == _currentVendorId);
-
+                .HasQueryFilter(p =>
+                    _currentUserService.IsAdmin() ||
+                    (!p.IsDeleted && (
+                        _currentUserService.GetCurrentVendorId() == null ||
+                        p.VendorId == _currentUserService.GetCurrentVendorId()
+                    ))
+                );
         }
 
 

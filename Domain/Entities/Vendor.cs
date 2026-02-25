@@ -11,6 +11,7 @@ namespace Domain.Entities
         public string? LogoUrl { get; set; }
         public string? LicenseUrl { get; set; }
         public VendorStatus Status { get; set; } = VendorStatus.Pending;
+        public string? RejectionReason { get; set; }
 
         public Guid UserId { get; set; }
         public virtual ApplicationUser User { get; set; } = null!;

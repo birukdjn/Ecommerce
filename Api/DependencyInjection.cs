@@ -1,4 +1,5 @@
 ﻿using Api.Middleware;
+using Domain.Constants;
 using Microsoft.OpenApi;
 
 namespace Api
@@ -11,6 +12,10 @@ namespace Api
             services.AddProblemDetails();
 
             services.AddAuthentication().AddBearerToken();
+            services.AddAuthorizationBuilder()
+                .AddPolicy("AdminOnly", policy => policy.RequireRole(Roles.Admin))
+                .AddPolicy("VendorOnly", policy => policy.RequireRole(Roles.Vendor))
+                .AddPolicy("ActiveVendorOnly", policy => policy.RequireRole(Roles.Vendor).RequireClaim("IsActive", "true"));
 
             services.AddEndpointsApiExplorer();
 

@@ -7,8 +7,6 @@ using Infrastructure.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
-
 builder.Services
     .AddApiServices()
     .AddApplicationServices()

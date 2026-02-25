@@ -1,7 +1,9 @@
 ﻿using Application.Features.Users.Commands.Identity;
+using Application.Interfaces;
 using Domain.Constants;
 using Domain.Entities;
 using Infrastructure.Extensions;
+using Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.BearerToken;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -41,17 +43,18 @@ public static class IdentityApiEndpointRouteBuilderExtensions
         var routeGroup = endpoints.MapGroup("");
 
         // POST: /register
-        routeGroup.MapPost("/register", async Task<Results<Ok, ValidationProblem>>
-            ([FromBody] RegisterCommand registration, HttpContext context, [FromServices] IServiceProvider sp) =>
+        routeGroup.MapPost("/register", async Task<Results<Ok<string>, ValidationProblem>>
+            ([FromBody] RegisterCommand registration, HttpContext context, [FromServices] IServiceProvider serviceProvider) =>
         {
-            var userManager = sp.GetRequiredService<UserManager<TUser>>();
+            var userManager = serviceProvider.GetRequiredService<UserManager<TUser>>();
+            var sms = serviceProvider.GetRequiredService<ISmsSender>();
 
             if (!userManager.SupportsUserEmail)
             {
                 throw new NotSupportedException($"{nameof(MapCustomIdentityApi)} requires a user store with email support.");
             }
 
-            var userStore = sp.GetRequiredService<IUserStore<TUser>>();
+            var userStore = serviceProvider.GetRequiredService<IUserStore<TUser>>();
             var emailStore = (IUserEmailStore<TUser>)userStore;
             var email = registration.Email;
 
@@ -78,8 +81,22 @@ public static class IdentityApiEndpointRouteBuilderExtensions
             }
 
             await userManager.AddToRoleAsync(user, Roles.Customer);
+
             await SendConfirmationEmailAsync(user, userManager, context, email);
-            return TypedResults.Ok();
+
+            var phoneNumber = await userManager.GetPhoneNumberAsync(user);
+
+            if (!string.IsNullOrEmpty(phoneNumber))
+            {
+                var smsResult = await sms.SendSmsChallengeAsync(phoneNumber);
+                if (smsResult.IsSuccess)
+                {
+                    return TypedResults.Ok(smsResult.Value);
+                }
+
+                return CreateValidationProblem("SmsError", smsResult.Error ?? "Failed to send verification SMS.");
+            }
+            return TypedResults.Ok(string.Empty);
         });
 
         // POST: /login
@@ -126,6 +143,11 @@ public static class IdentityApiEndpointRouteBuilderExtensions
                 }
             }
 
+            if (!await userManager.IsPhoneNumberConfirmedAsync(user))
+            {
+                return TypedResults.Problem("Please verify your phone number before logging in.", statusCode: StatusCodes.Status403Forbidden);
+            }
+
             if (!result.Succeeded)
             {
                 return TypedResults.Problem("Invalid login attempt.", statusCode: StatusCodes.Status401Unauthorized);
@@ -153,6 +175,36 @@ public static class IdentityApiEndpointRouteBuilderExtensions
 
             var newPrincipal = await signInManager.CreateUserPrincipalAsync(user);
             return TypedResults.SignIn(newPrincipal, authenticationScheme: IdentityConstants.BearerScheme);
+        });
+
+        // POST: /verify-phone
+        routeGroup.MapPost("/verify-phone", async Task<Results<Ok, ValidationProblem, NotFound>>
+            (string phoneNumber, string code, string verificationId, [FromServices] IServiceProvider sp) =>
+        {
+            var userManager = sp.GetRequiredService<UserManager<TUser>>();
+            var smsSender = sp.GetRequiredService<ISmsSender>();
+
+            // 1. Verify code with AfroSms
+            var verificationResult = await smsSender.VerifyCodeAsync(phoneNumber, code, verificationId);
+
+            if (!verificationResult.IsSuccess)
+            {
+                return CreateValidationProblem("InvalidCode", "The verification code is incorrect or expired.");
+            }
+
+            // 2. Update User in Database
+            var user = await userManager.Users.FirstOrDefaultAsync(u =>
+                EF.Property<string>(u, "PhoneNumber") == phoneNumber);
+
+            if (user == null) return TypedResults.NotFound();
+
+            // Mark as confirmed
+            var token = await userManager.GenerateChangePhoneNumberTokenAsync(user, phoneNumber);
+            var identityResult = await userManager.ChangePhoneNumberAsync(user, phoneNumber, token);
+
+            return identityResult.Succeeded
+                ? TypedResults.Ok()
+                : CreateValidationProblem(identityResult);
         });
 
         // GET: /confirmEmail
