@@ -3,7 +3,7 @@ using Domain.Common.Interfaces;
 using Domain.Entities;
 using MediatR;
 
-namespace Application.Features.Admins.Commands.CreateCategory
+namespace Application.Features.Categories.Commands.CreateCategory
 {
     public class CreateCategoryHandler(IUnitOfWork unitOfWork) 
         : IRequestHandler<CreateCategoryCommand, Result<Guid>>

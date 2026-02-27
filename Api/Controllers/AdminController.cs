@@ -1,7 +1,5 @@
 using Application.DTOs;
 using Application.Features.Admins.Commands.ApproveVendor;
-using Application.Features.Admins.Commands.CreateCategory;
-using Application.Features.Admins.Commands.DeleteCategory;
 using Application.Features.Admins.Commands.RejectVendor;
 using Application.Features.Admins.Commands.ToggleVendorStatus;
 using Application.Features.Admins.Queries.GetStats;
@@ -50,15 +48,6 @@ namespace Api.Controllers
         [HttpPatch("vendors/{id}/status")]
         public async Task<ActionResult> ToggleVendorStatus(Guid id, [FromQuery] bool isActive)
             => await Handle(new ToggleVendorStatusCommand(id, isActive));
-
-        // --- CATEGORY MANAGEMENT ---
-        [HttpPost("categories")]
-        public async Task<ActionResult> CreateCategory([FromBody] CreateCategoryCommand command)
-            => await Handle(command);
-
-        [HttpDelete("categories/{id}")]
-        public async Task<ActionResult> DeleteCategory(Guid id)
-            => await Handle(new DeleteCategoryCommand(id));
 
         // --- USER MANAGEMENT ---
         [HttpGet("users")]

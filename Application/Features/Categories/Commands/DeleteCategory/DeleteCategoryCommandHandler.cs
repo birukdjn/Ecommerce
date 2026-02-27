@@ -4,7 +4,7 @@ using Domain.Entities;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
-namespace Application.Features.Admins.Commands.DeleteCategory
+namespace Application.Features.Categories.Commands.DeleteCategory
 {
     public class DeleteCategoryCommandHandler(
         IUnitOfWork unitOfWork,
