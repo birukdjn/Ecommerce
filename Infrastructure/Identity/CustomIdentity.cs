@@ -1,4 +1,5 @@
-﻿using Application.Features.Users.Commands.Identity;
+﻿using Application.DTOs;
+using Application.Features.Users.Commands.Identity;
 using Application.Interfaces;
 using Domain.Constants;
 using Domain.Entities;
@@ -38,7 +39,7 @@ public static class IdentityApiEndpointRouteBuilderExtensions
         var emailSender = endpoints.ServiceProvider.GetRequiredService<IEmailSender<TUser>>();
         var linkGenerator = endpoints.ServiceProvider.GetRequiredService<LinkGenerator>();
 
-        string? confirmEmailEndpointName = null;
+        // string? confirmEmailEndpointName = null;
 
         var routeGroup = endpoints.MapGroup("");
 
@@ -82,7 +83,7 @@ public static class IdentityApiEndpointRouteBuilderExtensions
 
             await userManager.AddToRoleAsync(user, Roles.Customer);
 
-            await SendConfirmationEmailAsync(user, userManager, context, email);
+            // await SendConfirmationEmailAsync(user, userManager, context, email);
 
             var phoneNumber = await userManager.GetPhoneNumberAsync(user);
 
@@ -100,7 +101,7 @@ public static class IdentityApiEndpointRouteBuilderExtensions
         });
 
         // POST: /login
-        routeGroup.MapPost("/login", async Task<Results<Ok<AccessTokenResponse>, EmptyHttpResult, ProblemHttpResult>>
+        routeGroup.MapPost("/login", async Task<Results<SignInHttpResult, ProblemHttpResult>>
             ([FromBody] LoginCommand login, [FromServices] IServiceProvider sp) =>
         {
 
@@ -127,21 +128,23 @@ public static class IdentityApiEndpointRouteBuilderExtensions
                          login.Password,
                          lockoutOnFailure: true);
 
-            if (result.RequiresTwoFactor)
-            {
-                if (!string.IsNullOrEmpty(login.TwoFactorCode))
+            /*
+                if (result.RequiresTwoFactor)
                 {
-                    result = await signInManager.TwoFactorAuthenticatorSignInAsync
-                    (
-                        login.TwoFactorCode, 
-                        login.RememberMe,
-                        rememberClient: login.RememberMe);
+                    if (!string.IsNullOrEmpty(login.TwoFactorCode))
+                    {
+                        result = await signInManager.TwoFactorAuthenticatorSignInAsync
+                        (
+                            login.TwoFactorCode, 
+                            login.RememberMe,
+                            rememberClient: login.RememberMe);
+                    }
+                    else if (!string.IsNullOrEmpty(login.TwoFactorRecoveryCode))
+                    {
+                        result = await signInManager.TwoFactorRecoveryCodeSignInAsync(login.TwoFactorRecoveryCode);
+                    }
                 }
-                else if (!string.IsNullOrEmpty(login.TwoFactorRecoveryCode))
-                {
-                    result = await signInManager.TwoFactorRecoveryCodeSignInAsync(login.TwoFactorRecoveryCode);
-                }
-            }
+            */
 
             if (!await userManager.IsPhoneNumberConfirmedAsync(user))
             {
@@ -153,8 +156,8 @@ public static class IdentityApiEndpointRouteBuilderExtensions
                 return TypedResults.Problem("Invalid login attempt.", statusCode: StatusCodes.Status401Unauthorized);
             }
 
-            await signInManager.SignInAsync(user, isPersistent: login.RememberMe);
-            return TypedResults.Empty;
+            var principal = await signInManager.CreateUserPrincipalAsync(user);
+            return TypedResults.SignIn(principal, authenticationScheme: IdentityConstants.BearerScheme);
         });
 
         // POST: /refresh
@@ -168,7 +171,7 @@ public static class IdentityApiEndpointRouteBuilderExtensions
             if (refreshTicket?.Properties?.ExpiresUtc is not { } expiresUtc ||
                 timeProvider.GetUtcNow() >= expiresUtc ||
                 await signInManager.ValidateSecurityStampAsync(refreshTicket.Principal) is not TUser user)
-                
+
             {
                 return TypedResults.Challenge();
             }
@@ -207,96 +210,47 @@ public static class IdentityApiEndpointRouteBuilderExtensions
                 : CreateValidationProblem(identityResult);
         });
 
-        // GET: /confirmEmail
-        routeGroup.MapGet("/confirmEmail", async Task<Results<ContentHttpResult, UnauthorizedHttpResult>>
-            ([FromQuery] string userId, [FromQuery] string code, [FromQuery] string? changedEmail, [FromServices] IServiceProvider sp) =>
-        {
-            var userManager = sp.GetRequiredService<UserManager<TUser>>();
-            if (await userManager.FindByIdAsync(userId) is not { } user)
-            {
-                return TypedResults.Unauthorized();
-            }
-
-            try
-            {
-                code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(code));
-            }
-            catch (FormatException)
-            {
-                return TypedResults.Unauthorized();
-            }
-
-            IdentityResult result;
-
-            if (string.IsNullOrEmpty(changedEmail))
-            {
-                result = await userManager.ConfirmEmailAsync(user, code);
-            }
-            else
-            {
-                result = await userManager.ChangeEmailAsync(user, changedEmail, code);
-
-                if (result.Succeeded)
-                {
-                    result = await userManager.SetUserNameAsync(user, changedEmail);
-                }
-            }
-
-            if (!result.Succeeded)
-            {
-                return TypedResults.Unauthorized();
-            }
-
-            return TypedResults.Text("Thank you for confirming your email.");
-        })
-        .Add(endpointBuilder =>
-        {
-            var finalPattern = ((RouteEndpointBuilder)endpointBuilder).RoutePattern.RawText;
-            confirmEmailEndpointName = $"{nameof(MapCustomIdentityApi)}-{finalPattern}";
-            endpointBuilder.Metadata.Add(new EndpointNameMetadata(confirmEmailEndpointName));
-        });
-
-        // POST: /resendConfirmationEmail
-        routeGroup.MapPost("/resendConfirmationEmail", async Task<Ok>
-            ([FromBody] ResendConfirmationEmailRequest resendRequest, HttpContext context, [FromServices] IServiceProvider sp) =>
-        {
-            var userManager = sp.GetRequiredService<UserManager<TUser>>();
-            if (await userManager.FindByEmailAsync(resendRequest.Email) is not { } user)
-            {
-                return TypedResults.Ok();
-            }
-
-            await SendConfirmationEmailAsync(user, userManager, context, resendRequest.Email);
-            return TypedResults.Ok();
-        });
 
         // POST: /forgotPassword
-        routeGroup.MapPost("/forgotPassword", async Task<Results<Ok, ValidationProblem>>
-            ([FromBody] ForgotPasswordRequest resetRequest, [FromServices] IServiceProvider sp) =>
+        routeGroup.MapPost("/forgotPassword", async Task<Results<Ok<object>, ValidationProblem>>
+            ([FromBody] ForgotPasswordRequestDto resetRequest, [FromServices] IServiceProvider sp) =>
         {
             var userManager = sp.GetRequiredService<UserManager<TUser>>();
-            var user = await userManager.FindByEmailAsync(resetRequest.Email);
+            var smsSender = sp.GetRequiredService<ISmsSender>();
+            var user = await userManager.Users.FirstOrDefaultAsync(u =>
+                 EF.Property<string>(u, "PhoneNumber") == resetRequest.PhoneNumber);
 
-            if (user is not null && await userManager.IsEmailConfirmedAsync(user))
+            if (user is not null && await userManager.IsPhoneNumberConfirmedAsync(user))
             {
                 var code = await userManager.GeneratePasswordResetTokenAsync(user);
-                code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+                var encodedCode = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+                bool isSent = await smsSender.SendSmsAsync(
+                    resetRequest.PhoneNumber,
+                    $"Your password reset code is: {encodedCode}");
 
-                await emailSender.SendPasswordResetCodeAsync(user, resetRequest.Email, HtmlEncoder.Default.Encode(code));
+                if (!isSent)
+                {
+                    return CreateValidationProblem("SmsError", "Failed to send reset code.");
+                }
+
             }
 
-            return TypedResults.Ok();
+            return TypedResults.Ok((object)new
+            {
+                Message = "If an account is associated with this phone number, a reset code has been sent."
+            });
         });
 
         // POST: /resetPassword
-        routeGroup.MapPost("/resetPassword", async Task<Results<Ok, ValidationProblem>>
-            ([FromBody] ResetPasswordRequest resetRequest, [FromServices] IServiceProvider sp) =>
+        routeGroup.MapPost("/resetPassword", async Task<Results<Ok<object>, ValidationProblem>>
+            ([FromBody] ResetPasswordRequestByPhone resetRequest, [FromServices] IServiceProvider sp) =>
         {
             var userManager = sp.GetRequiredService<UserManager<TUser>>();
 
-            var user = await userManager.FindByEmailAsync(resetRequest.Email);
+            var user = await userManager.Users.FirstOrDefaultAsync(u =>
+                EF.Property<string>(u, "PhoneNumber") == resetRequest.PhoneNumber);
 
-            if (user is null || !(await userManager.IsEmailConfirmedAsync(user)))
+            if (user is null || !(await userManager.IsPhoneNumberConfirmedAsync(user)))
             {
                 return CreateValidationProblem(IdentityResult.Failed(userManager.ErrorDescriber.InvalidToken()));
             }
@@ -304,8 +258,8 @@ public static class IdentityApiEndpointRouteBuilderExtensions
             IdentityResult result;
             try
             {
-                var code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(resetRequest.ResetCode));
-                result = await userManager.ResetPasswordAsync(user, code, resetRequest.NewPassword);
+                var DecodedCode = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(resetRequest.ResetCode));
+                result = await userManager.ResetPasswordAsync(user, DecodedCode, resetRequest.NewPassword);
             }
             catch (FormatException)
             {
@@ -317,173 +271,243 @@ public static class IdentityApiEndpointRouteBuilderExtensions
                 return CreateValidationProblem(result);
             }
 
-            return TypedResults.Ok();
-        });
-
-        var accountGroup = routeGroup.MapGroup("/manage").RequireAuthorization();
-
-        // POST: /manage/2fa
-        accountGroup.MapPost("/2fa", async Task<Results<Ok<TwoFactorResponse>, ValidationProblem, NotFound>>
-            (ClaimsPrincipal claimsPrincipal, [FromBody] TwoFactorRequest tfaRequest, [FromServices] IServiceProvider sp) =>
-        {
-            var signInManager = sp.GetRequiredService<SignInManager<TUser>>();
-            var userManager = signInManager.UserManager;
-            if (await userManager.GetUserAsync(claimsPrincipal) is not { } user)
+            return TypedResults.Ok((object)new
             {
-                return TypedResults.NotFound();
-            }
-
-            if (tfaRequest.Enable == true)
-            {
-                if (tfaRequest.ResetSharedKey)
-                {
-                    return CreateValidationProblem("CannotResetSharedKeyAndEnable",
-                        "Resetting the 2fa shared key must disable 2fa until a 2fa token based on the new shared key is validated.");
-                }
-
-                if (string.IsNullOrEmpty(tfaRequest.TwoFactorCode))
-                {
-                    return CreateValidationProblem("RequiresTwoFactor",
-                        "No 2fa token was provided by the request. A valid 2fa token is required to enable 2fa.");
-                }
-
-                if (!await userManager.VerifyTwoFactorTokenAsync(user, userManager.Options.Tokens.AuthenticatorTokenProvider, tfaRequest.TwoFactorCode))
-                {
-                    return CreateValidationProblem("InvalidTwoFactorCode",
-                        "The 2fa token provided by the request was invalid. A valid 2fa token is required to enable 2fa.");
-                }
-
-                await userManager.SetTwoFactorEnabledAsync(user, true);
-            }
-            else if (tfaRequest.Enable == false || tfaRequest.ResetSharedKey)
-            {
-                await userManager.SetTwoFactorEnabledAsync(user, false);
-            }
-
-            if (tfaRequest.ResetSharedKey)
-            {
-                await userManager.ResetAuthenticatorKeyAsync(user);
-            }
-
-            string[]? recoveryCodes = null;
-            if (tfaRequest.ResetRecoveryCodes || (tfaRequest.Enable == true && await userManager.CountRecoveryCodesAsync(user) == 0))
-            {
-                var recoveryCodesEnumerable = await userManager.GenerateNewTwoFactorRecoveryCodesAsync(user, 10);
-                recoveryCodes = recoveryCodesEnumerable?.ToArray();
-            }
-
-            if (tfaRequest.ForgetMachine)
-            {
-                await signInManager.ForgetTwoFactorClientAsync();
-            }
-
-            var key = await userManager.GetAuthenticatorKeyAsync(user);
-            if (string.IsNullOrEmpty(key))
-            {
-                await userManager.ResetAuthenticatorKeyAsync(user);
-                key = await userManager.GetAuthenticatorKeyAsync(user);
-
-                if (string.IsNullOrEmpty(key))
-                {
-                    throw new NotSupportedException("The user manager must produce an authenticator key after reset.");
-                }
-            }
-
-            return TypedResults.Ok(new TwoFactorResponse
-            {
-                SharedKey = key,
-                RecoveryCodes = recoveryCodes,
-                RecoveryCodesLeft = recoveryCodes?.Length ?? await userManager.CountRecoveryCodesAsync(user),
-                IsTwoFactorEnabled = await userManager.GetTwoFactorEnabledAsync(user),
-                IsMachineRemembered = await signInManager.IsTwoFactorClientRememberedAsync(user),
+                Message = "Your password has been reset successfully. You can now log in with your new password."
             });
         });
 
-        // GET: /manage/info
-        accountGroup.MapGet("/info", async Task<Results<Ok<InfoResponse>, ValidationProblem, NotFound>>
-            (ClaimsPrincipal claimsPrincipal, [FromServices] IServiceProvider sp) =>
-        {
-            var userManager = sp.GetRequiredService<UserManager<TUser>>();
-            if (await userManager.GetUserAsync(claimsPrincipal) is not { } user)
-            {
-                return TypedResults.NotFound();
-            }
 
-            return TypedResults.Ok(await CreateInfoResponseAsync(user, userManager));
-        });
-
-        // POST: /manage/info
-        accountGroup.MapPost("/info", async Task<Results<Ok<InfoResponse>, ValidationProblem, NotFound>>
-            (ClaimsPrincipal claimsPrincipal, [FromBody] InfoRequest infoRequest, HttpContext context, [FromServices] IServiceProvider sp) =>
-        {
-            var userManager = sp.GetRequiredService<UserManager<TUser>>();
-            if (await userManager.GetUserAsync(claimsPrincipal) is not { } user)
-            {
-                return TypedResults.NotFound();
-            }
-
-            if (!string.IsNullOrEmpty(infoRequest.NewEmail) && !_emailAddressAttribute.IsValid(infoRequest.NewEmail))
-            {
-                return CreateValidationProblem(IdentityResult.Failed(userManager.ErrorDescriber.InvalidEmail(infoRequest.NewEmail)));
-            }
-
-            if (!string.IsNullOrEmpty(infoRequest.NewPassword))
-            {
-                if (string.IsNullOrEmpty(infoRequest.OldPassword))
+        /*
+                // GET: /confirmEmail
+                routeGroup.MapGet("/confirmEmail", async Task<Results<ContentHttpResult, UnauthorizedHttpResult>>
+                    ([FromQuery] string userId, [FromQuery] string code, [FromQuery] string? changedEmail, [FromServices] IServiceProvider sp) =>
                 {
-                    return CreateValidationProblem("OldPasswordRequired",
-                        "The old password is required to set a new password. If the old password is forgotten, use /resetPassword.");
+                    var userManager = sp.GetRequiredService<UserManager<TUser>>();
+                    if (await userManager.FindByIdAsync(userId) is not { } user)
+                    {
+                        return TypedResults.Unauthorized();
+                    }
+
+                    try
+                    {
+                        code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(code));
+                    }
+                    catch (FormatException)
+                    {
+                        return TypedResults.Unauthorized();
+                    }
+
+                    IdentityResult result;
+
+                    if (string.IsNullOrEmpty(changedEmail))
+                    {
+                        result = await userManager.ConfirmEmailAsync(user, code);
+                    }
+                    else
+                    {
+                        result = await userManager.ChangeEmailAsync(user, changedEmail, code);
+
+                        if (result.Succeeded)
+                        {
+                            result = await userManager.SetUserNameAsync(user, changedEmail);
+                        }
+                    }
+
+                    if (!result.Succeeded)
+                    {
+                        return TypedResults.Unauthorized();
+                    }
+
+                    return TypedResults.Text("Thank you for confirming your email.");
+                }).Add(endpointBuilder =>
+                {
+                    var finalPattern = ((RouteEndpointBuilder)endpointBuilder).RoutePattern.RawText;
+                    confirmEmailEndpointName = $"{nameof(MapCustomIdentityApi)}-{finalPattern}";
+                    endpointBuilder.Metadata.Add(new EndpointNameMetadata(confirmEmailEndpointName));
+                });
+
+                // POST: /resendConfirmationEmail
+                routeGroup.MapPost("/resendConfirmationEmail", async Task<Ok>
+                    ([FromBody] ResendConfirmationEmailRequest resendRequest, HttpContext context, [FromServices] IServiceProvider sp) =>
+                {
+                    var userManager = sp.GetRequiredService<UserManager<TUser>>();
+                    if (await userManager.FindByEmailAsync(resendRequest.Email) is not { } user)
+                    {
+                        return TypedResults.Ok();
+                    }
+
+                    await SendConfirmationEmailAsync(user, userManager, context, resendRequest.Email);
+                    return TypedResults.Ok();
+                });
+
+                var accountGroup = routeGroup.MapGroup("/manage").RequireAuthorization();
+
+                // POST: /manage/2fa
+                accountGroup.MapPost("/2fa", async Task<Results<Ok<TwoFactorResponse>, ValidationProblem, NotFound>>
+                    (ClaimsPrincipal claimsPrincipal, [FromBody] TwoFactorRequest tfaRequest, [FromServices] IServiceProvider sp) =>
+                {
+                    var signInManager = sp.GetRequiredService<SignInManager<TUser>>();
+                    var userManager = signInManager.UserManager;
+                    if (await userManager.GetUserAsync(claimsPrincipal) is not { } user)
+                    {
+                        return TypedResults.NotFound();
+                    }
+
+                    if (tfaRequest.Enable == true)
+                    {
+                        if (tfaRequest.ResetSharedKey)
+                        {
+                            return CreateValidationProblem("CannotResetSharedKeyAndEnable",
+                                "Resetting the 2fa shared key must disable 2fa until a 2fa token based on the new shared key is validated.");
+                        }
+
+                        if (string.IsNullOrEmpty(tfaRequest.TwoFactorCode))
+                        {
+                            return CreateValidationProblem("RequiresTwoFactor",
+                                "No 2fa token was provided by the request. A valid 2fa token is required to enable 2fa.");
+                        }
+
+                        if (!await userManager.VerifyTwoFactorTokenAsync(user, userManager.Options.Tokens.AuthenticatorTokenProvider, tfaRequest.TwoFactorCode))
+                        {
+                            return CreateValidationProblem("InvalidTwoFactorCode",
+                                "The 2fa token provided by the request was invalid. A valid 2fa token is required to enable 2fa.");
+                        }
+
+                        await userManager.SetTwoFactorEnabledAsync(user, true);
+                    }
+                    else if (tfaRequest.Enable == false || tfaRequest.ResetSharedKey)
+                    {
+                        await userManager.SetTwoFactorEnabledAsync(user, false);
+                    }
+
+                    if (tfaRequest.ResetSharedKey)
+                    {
+                        await userManager.ResetAuthenticatorKeyAsync(user);
+                    }
+
+                    string[]? recoveryCodes = null;
+                    if (tfaRequest.ResetRecoveryCodes || (tfaRequest.Enable == true && await userManager.CountRecoveryCodesAsync(user) == 0))
+                    {
+                        var recoveryCodesEnumerable = await userManager.GenerateNewTwoFactorRecoveryCodesAsync(user, 10);
+                        recoveryCodes = recoveryCodesEnumerable?.ToArray();
+                    }
+
+                    if (tfaRequest.ForgetMachine)
+                    {
+                        await signInManager.ForgetTwoFactorClientAsync();
+                    }
+
+                    var key = await userManager.GetAuthenticatorKeyAsync(user);
+                    if (string.IsNullOrEmpty(key))
+                    {
+                        await userManager.ResetAuthenticatorKeyAsync(user);
+                        key = await userManager.GetAuthenticatorKeyAsync(user);
+
+                        if (string.IsNullOrEmpty(key))
+                        {
+                            throw new NotSupportedException("The user manager must produce an authenticator key after reset.");
+                        }
+                    }
+
+                    return TypedResults.Ok(new TwoFactorResponse
+                    {
+                        SharedKey = key,
+                        RecoveryCodes = recoveryCodes,
+                        RecoveryCodesLeft = recoveryCodes?.Length ?? await userManager.CountRecoveryCodesAsync(user),
+                        IsTwoFactorEnabled = await userManager.GetTwoFactorEnabledAsync(user),
+                        IsMachineRemembered = await signInManager.IsTwoFactorClientRememberedAsync(user),
+                    });
+                });
+
+                // GET: /manage/info
+                accountGroup.MapGet("/info", async Task<Results<Ok<InfoResponse>, ValidationProblem, NotFound>>
+                    (ClaimsPrincipal claimsPrincipal, [FromServices] IServiceProvider sp) =>
+                {
+                    var userManager = sp.GetRequiredService<UserManager<TUser>>();
+                    if (await userManager.GetUserAsync(claimsPrincipal) is not { } user)
+                    {
+                        return TypedResults.NotFound();
+                    }
+
+                    return TypedResults.Ok(await CreateInfoResponseAsync(user, userManager));
+                });
+
+                // POST: /manage/info
+                accountGroup.MapPost("/info", async Task<Results<Ok<InfoResponse>, ValidationProblem, NotFound>>
+                    (ClaimsPrincipal claimsPrincipal, [FromBody] InfoRequest infoRequest, HttpContext context, [FromServices] IServiceProvider sp) =>
+                {
+                    var userManager = sp.GetRequiredService<UserManager<TUser>>();
+                    if (await userManager.GetUserAsync(claimsPrincipal) is not { } user)
+                    {
+                        return TypedResults.NotFound();
+                    }
+
+                    if (!string.IsNullOrEmpty(infoRequest.NewEmail) && !_emailAddressAttribute.IsValid(infoRequest.NewEmail))
+                    {
+                        return CreateValidationProblem(IdentityResult.Failed(userManager.ErrorDescriber.InvalidEmail(infoRequest.NewEmail)));
+                    }
+
+                    if (!string.IsNullOrEmpty(infoRequest.NewPassword))
+                    {
+                        if (string.IsNullOrEmpty(infoRequest.OldPassword))
+                        {
+                            return CreateValidationProblem("OldPasswordRequired",
+                                "The old password is required to set a new password. If the old password is forgotten, use /resetPassword.");
+                        }
+
+                        var changePasswordResult = await userManager.ChangePasswordAsync(user, infoRequest.OldPassword, infoRequest.NewPassword);
+                        if (!changePasswordResult.Succeeded)
+                        {
+                            return CreateValidationProblem(changePasswordResult);
+                        }
+                    }
+
+                    if (!string.IsNullOrEmpty(infoRequest.NewEmail))
+                    {
+                        var email = await userManager.GetEmailAsync(user);
+
+                        if (email != infoRequest.NewEmail)
+                        {
+                            await SendConfirmationEmailAsync(user, userManager, context, infoRequest.NewEmail, isChange: true);
+                        }
+                    }
+
+                    return TypedResults.Ok(await CreateInfoResponseAsync(user, userManager));
+                });
+
+
+                async Task SendConfirmationEmailAsync(TUser user, UserManager<TUser> userManager, HttpContext context, string email, bool isChange = false)
+                {
+                    if (confirmEmailEndpointName is null)
+                    {
+                        throw new NotSupportedException("No email confirmation endpoint was registered!");
+                    }
+
+                    var code = isChange
+                        ? await userManager.GenerateChangeEmailTokenAsync(user, email)
+                        : await userManager.GenerateEmailConfirmationTokenAsync(user);
+                    code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+
+                    var userId = await userManager.GetUserIdAsync(user);
+                    var routeValues = new RouteValueDictionary()
+                    {
+                        ["userId"] = userId,
+                        ["code"] = code,
+                    };
+
+                    if (isChange)
+                    {
+                        routeValues.Add("changedEmail", email);
+                    }
+
+                    var confirmEmailUrl = linkGenerator.GetUriByName(context, confirmEmailEndpointName, routeValues)
+                        ?? throw new NotSupportedException($"Could not find endpoint named '{confirmEmailEndpointName}'.");
+
+                    await emailSender.SendConfirmationLinkAsync(user, email, HtmlEncoder.Default.Encode(confirmEmailUrl));
                 }
 
-                var changePasswordResult = await userManager.ChangePasswordAsync(user, infoRequest.OldPassword, infoRequest.NewPassword);
-                if (!changePasswordResult.Succeeded)
-                {
-                    return CreateValidationProblem(changePasswordResult);
-                }
-            }
-
-            if (!string.IsNullOrEmpty(infoRequest.NewEmail))
-            {
-                var email = await userManager.GetEmailAsync(user);
-
-                if (email != infoRequest.NewEmail)
-                {
-                    await SendConfirmationEmailAsync(user, userManager, context, infoRequest.NewEmail, isChange: true);
-                }
-            }
-
-            return TypedResults.Ok(await CreateInfoResponseAsync(user, userManager));
-        });
-
-        async Task SendConfirmationEmailAsync(TUser user, UserManager<TUser> userManager, HttpContext context, string email, bool isChange = false)
-        {
-            if (confirmEmailEndpointName is null)
-            {
-                throw new NotSupportedException("No email confirmation endpoint was registered!");
-            }
-
-            var code = isChange
-                ? await userManager.GenerateChangeEmailTokenAsync(user, email)
-                : await userManager.GenerateEmailConfirmationTokenAsync(user);
-            code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-
-            var userId = await userManager.GetUserIdAsync(user);
-            var routeValues = new RouteValueDictionary()
-            {
-                ["userId"] = userId,
-                ["code"] = code,
-            };
-
-            if (isChange)
-            {
-                routeValues.Add("changedEmail", email);
-            }
-
-            var confirmEmailUrl = linkGenerator.GetUriByName(context, confirmEmailEndpointName, routeValues)
-                ?? throw new NotSupportedException($"Could not find endpoint named '{confirmEmailEndpointName}'.");
-
-            await emailSender.SendConfirmationLinkAsync(user, email, HtmlEncoder.Default.Encode(confirmEmailUrl));
-        }
+        */
 
         return new IdentityEndpointsConventionBuilder(routeGroup);
     }
@@ -524,7 +548,7 @@ public static class IdentityApiEndpointRouteBuilderExtensions
     private sealed class FromBodyAttribute : Attribute, IFromBodyMetadata { }
 
     [AttributeUsage(AttributeTargets.Parameter)]
-    private sealed class FromServicesAttribute : Attribute, IFromServiceMetadata{ }
+    private sealed class FromServicesAttribute : Attribute, IFromServiceMetadata { }
 
     [AttributeUsage(AttributeTargets.Parameter)]
     private sealed class FromQueryAttribute : Attribute, IFromQueryMetadata { public string? Name => null; }
