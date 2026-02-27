@@ -9,6 +9,6 @@ namespace Application.Features.Vendors.Commands.BecomeVendor
         public string? Description { get; init; }
         public string LogoUrl { get; init; } = null!;
         public string LicenseUrl { get; init; } = null!;
-        public string PhoneNumber { get; init; } = null!;
+        
     }
 }

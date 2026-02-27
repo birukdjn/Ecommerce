@@ -68,11 +68,8 @@ namespace Api
             }
 
             app.UseHttpsRedirection();
-            app.UseStaticFiles();
             app.UseAuthentication();
             app.UseAuthorization();
-
-
             return app;
         }
     }

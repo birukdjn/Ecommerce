@@ -6,7 +6,7 @@ namespace Domain.Enums
     {
         Pending,
         InReview,
-        Active, 
+        Active,
         Suspended,
         Rejected
     }

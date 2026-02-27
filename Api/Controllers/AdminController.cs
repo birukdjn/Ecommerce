@@ -1,56 +1,89 @@
-﻿using Application.Features.Admins.Commands.ApproveVendor;
+using Application.DTOs;
+using Application.Features.Admins.Commands.ApproveVendor;
+using Application.Features.Admins.Commands.CreateCategory;
+using Application.Features.Admins.Commands.DeleteCategory;
 using Application.Features.Admins.Commands.RejectVendor;
+using Application.Features.Admins.Commands.ToggleVendorStatus;
+using Application.Features.Admins.Queries.GetStats;
+using Application.Features.Admins.Queries.GetUsers;
 using Application.Features.Admins.Queries.GetVendorRequests;
+using Application.Features.Admins.Queries.GetVendors;
+using Domain.Common;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Application.DTOs;
 
 namespace Api.Controllers
 {
-
     [Authorize(Policy = "AdminOnly")]
-    [Route("api/admin/vendors")]
-    public class AdminController(ISender mediator) :ControllerBase
+    [ApiController]
+    [Route("api/[controller]")]
+    public class AdminController(ISender mediator) : ControllerBase
     {
-        [HttpGet("requests")]
-        public async Task<ActionResult> GetRequests()
+        // --- SYSTEM STATS ---
+        [HttpGet("stats")]
+        public async Task<ActionResult> GetDashboardStats()
+            => await Handle(new GetAdminDashboardStatsQuery());
+
+        // --- VENDOR REQUESTS (ONBOARDING) ---
+        [HttpGet("vendors/requests")]
+        public async Task<ActionResult> GetVendorRequests()
+            => await Handle(new GetVendorRequestsQuery());
+
+        [HttpGet("vendors/requests/{id}")]
+        public async Task<ActionResult> GetVendorRequest(Guid id)
+            => await Handle(new GetVendorRequestByIdQuery(id));
+
+        [HttpPost("vendors/{id}/approve")]
+        public async Task<ActionResult> ApproveVendor(Guid id)
+            => await Handle(new ApproveVendorCommand(id));
+
+        [HttpPost("vendors/{id}/reject")]
+        public async Task<ActionResult> RejectVendor(Guid id, [FromBody] RejectVendorRequest request)
+            => await Handle(new RejectVendorCommand(id, request.Reason));
+
+        // --- VENDOR MANAGEMENT (EXISTING VENDORS) ---
+        [HttpGet("vendors")]
+        public async Task<ActionResult> GetAllVendors()
+            => await Handle(new GetAllVendorsQuery());
+
+        [HttpPatch("vendors/{id}/status")]
+        public async Task<ActionResult> ToggleVendorStatus(Guid id, [FromQuery] bool isActive)
+            => await Handle(new ToggleVendorStatusCommand(id, isActive));
+
+        // --- CATEGORY MANAGEMENT ---
+        [HttpPost("categories")]
+        public async Task<ActionResult> CreateCategory([FromBody] CreateCategoryCommand command)
+            => await Handle(command);
+
+        [HttpDelete("categories/{id}")]
+        public async Task<ActionResult> DeleteCategory(Guid id)
+            => await Handle(new DeleteCategoryCommand(id));
+
+        // --- USER MANAGEMENT ---
+        [HttpGet("users")]
+        public async Task<ActionResult> GetAllUsers()
+            => await Handle(new GetAllUsersQuery());
+
+        // --- PRIVATE HELPER ---
+        private async Task<ActionResult> Handle<T>(IRequest<Result<T>> request)
         {
-            var result = await mediator.Send(new GetVendorRequestsQuery());
-            return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Error);
-        }
-
-        
-
-        [HttpGet("requests/{id}")]
-        public async Task<ActionResult> GetRequest(Guid id)
-        {
-            var result = await mediator.Send(new GetVendorRequestByIdQuery(id));
-            return result.IsSuccess ? Ok(result.Value) : NotFound(result.Error);
-        }
-
-        
-
-        [HttpPost("{id}/approve")]
-        public async Task<ActionResult<bool>> Approve(Guid id)
-        {
-            var result = await mediator.Send(new ApproveVendorCommand(id));
+            var result = await mediator.Send(request);
 
             if (!result.IsSuccess)
+            {
+                // Handle 404 vs 400
+                if (result.Error != null && result.Error.Contains("not found", StringComparison.OrdinalIgnoreCase))
+                {
+                    return NotFound(result.Error);
+                }
                 return BadRequest(result.Error);
+            }
+
+            // Return 204 No Content for successful void/bool results, 200 for data
+            if (result.Value is bool b && b) return NoContent();
 
             return Ok(result.Value);
-        }
-
-        [HttpPost("{id}/reject")]
-        public async Task<ActionResult> Reject(Guid id, [FromBody] RejectVendorRequest request)
-        {
-            if (string.IsNullOrWhiteSpace(request.Reason))
-                return BadRequest("A reason for rejection must be provided.");
-
-            var result = await mediator.Send(new RejectVendorCommand(id, request.Reason));
-
-            return result.IsSuccess ? Ok(result.Value) : BadRequest(result.Error);
         }
     }
 }

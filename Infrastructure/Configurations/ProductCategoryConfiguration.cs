@@ -9,6 +9,7 @@ namespace Infrastructure.Configurations
         public void Configure(EntityTypeBuilder<ProductCategory> builder)
         {
             builder.HasKey(pc => new { pc.ProductId, pc.CategoryId });
+            builder.HasQueryFilter(pc => !pc.IsDeleted);
 
         }
     }

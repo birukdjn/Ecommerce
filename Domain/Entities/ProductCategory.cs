@@ -1,7 +1,9 @@
 ﻿
+using Domain.Common;
+
 namespace Domain.Entities
 {
-    public class ProductCategory
+    public class ProductCategory:BaseEntity
     {
         public Guid ProductId { get; set; }
         public virtual Product Product { get; set; } = null!;

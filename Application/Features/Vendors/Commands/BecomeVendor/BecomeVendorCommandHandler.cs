@@ -39,8 +39,7 @@ namespace Application.Features.Vendors.Commands.BecomeVendor
             using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
             try
             {
-                user.PhoneNumber=request.PhoneNumber;
-
+                
                 var vendor = new Vendor
                 {
                     Id = Guid.NewGuid(),
