@@ -12,28 +12,25 @@ namespace Application.Features.Admins.Queries.GetStats
     {
         public async Task<Result<AdminStatsDto>> Handle(GetAdminDashboardStatsQuery request, CancellationToken ct)
         {
-            var totalUsersTask = context.Users.CountAsync(ct);
-            var activeUsersTask = context.Users.CountAsync(u => u.IsActive, ct);
-            var totalVendorsTask = context.Vendors.CountAsync(ct);
-            var pendingVendorsTask = context.Vendors.CountAsync(v => v.Status == VendorStatus.Pending, ct);
-            var activeVendorsTask = context.Vendors.CountAsync(v => v.Status == VendorStatus.Active, ct);
-            var totalOrdersTask = context.Orders.CountAsync(ct);
-            var totalProductsTask = context.Products.CountAsync(ct);
-            var totalCategoriesTask = context.Categories.CountAsync(ct);
-
-            await Task.WhenAll(totalUsersTask, activeUsersTask, totalVendorsTask, pendingVendorsTask,
-                                   activeVendorsTask, totalOrdersTask, totalProductsTask, totalCategoriesTask);
-
+            // Execute these one by one to avoid EF Core Concurrency exceptions
+            var totalUsers = await context.Users.CountAsync(ct);
+            var activeUsers = await context.Users.CountAsync(u => u.IsActive, ct);
+            var totalVendors = await context.Vendors.CountAsync(ct);
+            var pendingVendors = await context.Vendors.CountAsync(v => v.Status == VendorStatus.Pending, ct);
+            var activeVendors = await context.Vendors.CountAsync(v => v.Status == VendorStatus.Active, ct);
+            var totalOrders = await context.Orders.CountAsync(ct);
+            var totalProducts = await context.Products.CountAsync(ct);
+            var totalCategories = await context.Categories.CountAsync(ct);
 
             return Result<AdminStatsDto>.Success(new AdminStatsDto(
-                totalUsersTask.Result,
-                activeUsersTask.Result,
-                totalVendorsTask.Result,
-                pendingVendorsTask.Result,
-                activeVendorsTask.Result,
-                totalOrdersTask.Result,
-                totalProductsTask.Result,
-                totalCategoriesTask.Result
+                totalUsers,
+                activeUsers,
+                totalVendors,
+                pendingVendors,
+                activeVendors,
+                totalOrders,
+                totalProducts,
+                totalCategories
             ));
         }
     }

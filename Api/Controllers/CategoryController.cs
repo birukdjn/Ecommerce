@@ -4,7 +4,6 @@ using Application.Features.Categories.Commands.DeleteCategory;
 using Application.Features.Categories.Commands.UpdateCategory;
 using Application.Features.Categories.Queries.GetCategories;
 using Application.Features.Categories.Queries.GetCategoryById;
-using Domain.Common;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -12,50 +11,27 @@ using Microsoft.AspNetCore.Mvc;
 namespace Api.Controllers
 {
     [Authorize(Policy = "AdminOnly")]
-    [ApiController]
-    [Route("api/[controller]")]
-    public class CategoryController(ISender mediator) : ControllerBase
+    [Route("api/categories")]
+    public class CategoryController(ISender mediator) : ApiControllerBase
     {
-        [HttpGet("categories")]
+        [HttpGet]
         public async Task<ActionResult> GetCategories()
-           => await Handle(new GetCategoriesQuery());
+           => HandleResult(await mediator.Send(new GetCategoriesQuery()));
 
-        [HttpGet("categories/{id}")]
+        [HttpGet("{id}")]
         public async Task<ActionResult> GetCategory(Guid id)
-            => await Handle(new GetCategoryByIdQuery(id));
+            => HandleResult(await mediator.Send(new GetCategoryByIdQuery(id)));
 
-        [HttpPost("categories")]
+        [HttpPost]
         public async Task<ActionResult> CreateCategory([FromBody] CreateCategoryCommand command)
-            => await Handle(command);
+            => HandleResult(await mediator.Send(command));
 
-        [HttpPut("categories/{id}")]
+        [HttpPut("{id}")]
         public async Task<ActionResult> UpdateCategory(Guid id, [FromBody] UpdateCategoryRequest dto)
-            => await Handle(new UpdateCategoryCommand(id, dto.Name, dto.Description));
+            => HandleResult(await mediator.Send(new UpdateCategoryCommand(id, dto.Name, dto.Description)));
 
-        [HttpDelete("categories/{id}")]
+        [HttpDelete("{id}")]
         public async Task<ActionResult> DeleteCategory(Guid id)
-            => await Handle(new DeleteCategoryCommand(id));
-
-
-        // --- PRIVATE HELPER ---
-        private async Task<ActionResult> Handle<T>(IRequest<Result<T>> request)
-        {
-            var result = await mediator.Send(request);
-
-            if (!result.IsSuccess)
-            {
-                // Handle 404 vs 400
-                if (result.Error != null && result.Error.Contains("not found", StringComparison.OrdinalIgnoreCase))
-                {
-                    return NotFound(result.Error);
-                }
-                return BadRequest(result.Error);
-            }
-
-            // Return 204 No Content for successful void/bool results, 200 for data
-            if (result.Value is bool b && b) return NoContent();
-
-            return Ok(result.Value);
-        }
+            => HandleResult(await mediator.Send(new DeleteCategoryCommand(id)));
     }
 }

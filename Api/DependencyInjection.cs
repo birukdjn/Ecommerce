@@ -21,7 +21,12 @@ namespace Api
 
             services.AddSwaggerGen(options =>
             {
-                options.SwaggerDoc("v1", new OpenApiInfo { Title = "Ecommerce API", Version = "v1" });
+                options.SwaggerDoc("v1", new OpenApiInfo
+                {
+                    Title = "E-Commerce Multi-Vendor API",
+                    Version = "v1",
+                    Description = "Clean Architecture implementation with MediatR and EF Core"
+                });
 
                 options.AddSecurityDefinition("bearer", new OpenApiSecurityScheme
                 {
@@ -49,7 +54,7 @@ namespace Api
 
         public static WebApplication UseApiMiddleware(this WebApplication app)
         {
-          
+
             app.UseExceptionHandler();
 
 
@@ -63,7 +68,7 @@ namespace Api
                 });
                 app.UseSwaggerUI(options =>
                 {
-                    options.SwaggerEndpoint("/swagger/v1/swagger.json", "MoviesStore V1");
+                    options.SwaggerEndpoint("/swagger/v1/swagger.json", "E-Commerce Multi-Vendor API");
                 });
             }
 

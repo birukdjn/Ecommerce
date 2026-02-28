@@ -7,22 +7,22 @@ namespace Domain.Common.Interfaces
     public interface IApplicationDbContext
     {
         DbSet<ApplicationUser> Users { get; }
-        DbSet<Vendor> Vendors { get; }
-        DbSet<VendorWallet> VendorWallets { get; }
-        DbSet<Address> Addresses { get;}
-        DbSet<Cart> Carts { get; }
-        DbSet<CartItem> CartItems { get; }
-        DbSet<Category> Categories { get; }
-        DbSet<Order> Orders { get; }
-        DbSet<OrderItem> OrderItems { get; }
-        DbSet<PaymentTransaction> PaymentTransactions { get; }
-        DbSet<PayoutRequest> PayoutRequests { get; }
-        DbSet<Product> Products { get; }
-        DbSet<ProductCategory> ProductCategories { get; }
-        DbSet<ProductImage> ProductImages { get; }
-        DbSet<Review> Reviews { get; }
-        DbSet<SubOrder> SubOrders { get; }
-        DbSet<WalletTransaction> WalletTransactions { get; }
+        DbSet<Vendor> Vendors { get; set; }
+        DbSet<VendorWallet> VendorWallets { get; set; }
+        DbSet<Address> Addresses { get; set; }
+        DbSet<Cart> Carts { get; set; }
+        DbSet<CartItem> CartItems { get; set; }
+        DbSet<Category> Categories { get; set; }
+        DbSet<Order> Orders { get; set; }
+        DbSet<OrderItem> OrderItems { get; set; }
+        DbSet<PaymentTransaction> PaymentTransactions { get; set; }
+        DbSet<PayoutRequest> PayoutRequests { get; set; }
+        DbSet<Product> Products { get; set; }
+        DbSet<ProductCategory> ProductCategories { get; set; }
+        DbSet<ProductImage> ProductImages { get; set; }
+        DbSet<Review> Reviews { get; set; }
+        DbSet<SubOrder> SubOrders { get; set; }
+        DbSet<WalletTransaction> WalletTransactions { get; set; }
 
 
         Task<int> SaveChangesAsync(CancellationToken cancellationToken);

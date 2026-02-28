@@ -7,40 +7,39 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
+
 namespace Api.Controllers
 {
     [Authorize]
-    [ApiController]
-    [Route("api/[controller]")]
-    public class AddressController(ISender mediator) : ControllerBase
+    [Route("api/addresses")]
+    public class AddressController(ISender mediator) : ApiControllerBase
     {
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] CreateAddressCommand command)
-        {
-            var result = await mediator.Send(command);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
-        }
+        public async Task<ActionResult> Create([FromBody] CreateAddressCommand command)
+            => HandleResult(await mediator.Send(command));
 
         [HttpGet]
-        public async Task<IActionResult> GetMyAddresses()
-            => Ok(await mediator.Send(new GetAddressesQuery()));
+        public async Task<ActionResult> GetMyAddresses()
+            => HandleResult(await mediator.Send(new GetAddressesQuery()));
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetById(Guid id)
-            => Ok(await mediator.Send(new GetAddressByIdQuery(id)));
+        public async Task<ActionResult> GetById(Guid id)
+            => HandleResult(await mediator.Send(new GetAddressByIdQuery(id)));
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(Guid id, [FromBody] UpdateAddressCommand command)
+        public async Task<ActionResult> Update(Guid id, [FromBody] UpdateAddressCommand command)
         {
             if (id != command.Id) return BadRequest("ID mismatch");
-            var result = await mediator.Send(command);
-            return result.IsSuccess ? Ok(result) : BadRequest(result);
+
+            return HandleResult(await mediator.Send(command));
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(Guid id) => Ok(await mediator.Send(new DeleteAddressCommand(id)));
+        public async Task<ActionResult> Delete(Guid id)
+            => HandleResult(await mediator.Send(new DeleteAddressCommand(id)));
 
-        [HttpPatch("{id}/set-default")]
-        public async Task<IActionResult> SetDefault(Guid id) => Ok(await mediator.Send(new SetDefaultAddressCommand(id)));
+        [HttpPatch("{id}/default")]
+        public async Task<ActionResult> SetDefault(Guid id)
+            => HandleResult(await mediator.Send(new SetDefaultAddressCommand(id)));
     }
 }

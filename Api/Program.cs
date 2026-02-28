@@ -11,7 +11,7 @@ builder.Services
     .AddApiServices()
     .AddApplicationServices()
     .AddInfrastructureServices(builder.Configuration);
-    
+
 
 
 var app = builder.Build();
@@ -21,7 +21,7 @@ using (var scope = app.Services.CreateScope())
     var services = scope.ServiceProvider;
     try
     {
-        await IdentityDataSeeder.SeedRolesAsync(services);
+        await IdentityDataSeeder.SeedAllAsync(services);
     }
     catch (Exception ex)
     {

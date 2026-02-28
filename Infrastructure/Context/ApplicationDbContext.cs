@@ -15,7 +15,6 @@ namespace Infrastructure.Context
     {
         private readonly ICurrentUserService _currentUserService = currentUserService;
 
-        // Identity override
         public override DbSet<ApplicationUser> Users => base.Users;
 
         // Custom DbSets
@@ -99,6 +98,7 @@ namespace Infrastructure.Context
                     )
                 )
             );
+
 
             builder.Entity<SubOrder>().HasQueryFilter(p =>
                 _currentUserService.IsAdmin() || (

@@ -212,7 +212,7 @@ public static class IdentityApiEndpointRouteBuilderExtensions
 
 
         // POST: /forgotPassword
-        routeGroup.MapPost("/forgotPassword", async Task<Results<Ok<object>, ValidationProblem>>
+        routeGroup.MapPost("/forgot-password", async Task<Results<Ok<object>, ValidationProblem>>
             ([FromBody] ForgotPasswordRequestDto resetRequest, [FromServices] IServiceProvider sp) =>
         {
             var userManager = sp.GetRequiredService<UserManager<TUser>>();
@@ -242,7 +242,7 @@ public static class IdentityApiEndpointRouteBuilderExtensions
         });
 
         // POST: /resetPassword
-        routeGroup.MapPost("/resetPassword", async Task<Results<Ok<object>, ValidationProblem>>
+        routeGroup.MapPost("/reset-password", async Task<Results<Ok<object>, ValidationProblem>>
             ([FromBody] ResetPasswordRequestByPhone resetRequest, [FromServices] IServiceProvider sp) =>
         {
             var userManager = sp.GetRequiredService<UserManager<TUser>>();

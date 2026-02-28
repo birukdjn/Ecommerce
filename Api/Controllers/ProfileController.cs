@@ -6,19 +6,11 @@ using Microsoft.AspNetCore.Mvc;
 namespace Api.Controllers
 {
     [Authorize]
-    [ApiController]
-    [Route("api/[controller]")]
-    public class ProfileController(ISender mediator) : ControllerBase
+    [Route("api/profile")]
+    public class ProfileController(ISender mediator) : ApiControllerBase
     {
-        [HttpPost("update")]
-        public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileCommand command)
-        {
-            var result = await mediator.Send(command);
-
-            return result.IsSuccess
-                ? Ok(result)
-                : BadRequest(result);
-        }
-        
+        [HttpPut]
+        public async Task<ActionResult> UpdateProfile([FromBody] UpdateProfileCommand command)
+            => HandleResult(await mediator.Send(command));
     }
 }
