@@ -42,7 +42,7 @@ namespace Infrastructure.Services
             client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _settings.Token);
 
             // ttl=300 (5 minutes), len=4 (code length)
-            var url = $"api/challenge?from={_settings.IdentifierId}&sender={_settings.SenderName}&to={to}&pr={Uri.EscapeDataString(prefix)}&ttl=300&len=4&t=0";
+            var url = $"api/challenge?from={_settings.IdentifierId}&sender={_settings.SenderName}&to={to}&pr={Uri.EscapeDataString(prefix)}&ttl=300&len=6&t=0";
             try
             {
                 var response = await client.GetAsync(url);
@@ -86,6 +86,6 @@ namespace Infrastructure.Services
                 : Result.Failure("Invalid or expired code.");
         }
 
-       
+
     }
 }

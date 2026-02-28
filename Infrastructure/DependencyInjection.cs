@@ -21,7 +21,7 @@ namespace Infrastructure
         {
             services.AddHttpContextAccessor();
 
-            
+
             services.AddScoped<IFileService, FileService>();
             services.AddScoped<ISmsSender, SmsSender>();
             services.AddHttpClient("AfroSms", client =>

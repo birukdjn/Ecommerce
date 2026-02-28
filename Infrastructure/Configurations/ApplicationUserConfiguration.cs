@@ -11,6 +11,10 @@ namespace Infrastructure.Configurations
             builder.Property(x => x.FullName)
                    .IsRequired(false)
                    .HasMaxLength(150);
+
+            builder.HasIndex(u => u.PhoneNumber).IsUnique();
+
+            builder.HasIndex(u => u.Email).IsUnique();
         }
     }
 }

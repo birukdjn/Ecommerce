@@ -3,7 +3,7 @@ using Microsoft.Extensions.Options;
 
 namespace Infrastructure.Options
 {
-    internal class IdentityOptionsSetup: IConfigureOptions<IdentityOptions>
+    internal class IdentityOptionsSetup : IConfigureOptions<IdentityOptions>
     {
         public void Configure(IdentityOptions options)
         {
@@ -11,6 +11,8 @@ namespace Infrastructure.Options
             options.Password.RequiredLength = 6;
             options.Password.RequireUppercase = false;
             options.Password.RequireNonAlphanumeric = false;
+            options.User.RequireUniqueEmail = true;
+
 
             options.User.RequireUniqueEmail = true;
         }

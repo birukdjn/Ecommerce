@@ -1,107 +1,107 @@
-# ==========================
-# Visual Studio / Rider / IDE
-# ==========================
-.vs/
-.vscode/
-.idea/
-*.suo
-*.user
-*.userosscache
-*.sln.docstates
-*.ncrunch*
-*.dotCover
-_ReSharper*/
-*.DotSettings.user
-
-# ==========================
-# Build results
-# ==========================
-bin/
-obj/
-out/
-TestResults/
-build/
-publish/
-*.cache
-
-# ==========================
-# NuGet
-# ==========================
-*.nupkg
-*.snupkg
-*.nuspec
-packages/
-.nuget/
-project.lock.json
-project.fragment.lock.json
-artifacts/
-
-# ==========================
-# Rider
-# ==========================
-.idea/
-
-# ==========================
-# ASP.NET / Web API
-# ==========================
-wwwroot/
-node_modules/
-bower_components/
-*.log
-*.vspscc
-
-# ==========================
-# User-specific files
-# ==========================
-*.pidb
-*.userprefs
-
-# ==========================
-# OS generated files
-# ==========================
-.DS_Store
-Thumbs.db
-ehthumbs.db
-Desktop.ini
-$RECYCLE.BIN/
-*.cab
-*.msi
-*.msm
-*.msp
-
-# ==========================
-# Entity Framework / Migrations
-# ==========================
-# Ignore migrations if you plan to regenerate them
-
-*.Database.mdf
-*.Database_log.ldf
-
-# ==========================
-# Docker (if used)
-# ==========================
-docker-compose.override.yml
-docker-compose.override.*.yml
+# ==============================================================================
+# SECRETS & LOCAL CONFIG (CRITICAL: Do not commit these!)
+# ==============================================================================
+appsettings.Local.json
+appsettings.*.Local.json
+appsettings.Development.json
+# Note: Usually, appsettings.Development.json is committed as a template, 
+# but sensitive values (API Keys, DB Passwords) should stay in User Secrets or .env
 *.env
-
-# ==========================
-# Clean Architecture specific
-# ==========================
-# Domain, Application, Infrastructure, WebAPI folders
-**/bin/
-**/obj/
-**/*.dll
-**/*.pdb
-**/*.exe
-**/*.cache
-**/*.log
-
-# ==========================
-# Secrets / Credentials
-# ==========================
+*.dev.env
 secrets.json
 *.pem
 *.key
 *.pfx
+*.crt
 
-.fake
+# ==============================================================================
+# BUILD & OUTPUTS
+# ==============================================================================
+[Bb]in/
+[Oo]bj/
+[Oo]ut/
+artifacts/
+publish/
+**/[Bb]in/
+**/[Oo]bj/
+
+# MSBuild logic
+.applier/
+.templateengine/
+
+# ==============================================================================
+# DOTNET ARTIFACTS
+# ==============================================================================
+*.dll
+*.exe
+*.pdb
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.patch
+*.diff
+
+# ==============================================================================
+# IDE - VISUAL STUDIO
+# ==============================================================================
+.vs/
+*.user
+*.userosscache
+*.suo
+*.vstoken
+*.dbmdl
+*.jfm
+
+# ==============================================================================
+# IDE - RIDER / INTELLIJ / VS CODE
+# ==============================================================================
+.idea/
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.sln.iml
+
+# ==============================================================================
+# DATABASE / PERSISTENCE
+# ==============================================================================
+*.mdf
+*.ldf
+*.sdf
+*.db
+*.db-shm
+*.db-wal
+# Don't ignore migrations (.cs files), but ignore log files
+*.log
+
+# ==============================================================================
+# NUGET & PACKAGES
+# ==============================================================================
+packages/
+*.nupkg
+*.snupkg
+# Keep this if you use NuGet lock files
+# !project.lock.json 
+
+# ==============================================================================
+# TESTING
+# ==============================================================================
+TestResults/
+*.sequenced
+*.dotCover
+
+# ==============================================================================
+# OS & MISC
+# ==============================================================================
+.DS_Store
+Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
+
+# ==============================================================================
+# DOCKER
+# ==============================================================================
+docker-compose.override.yml
+.dockerignore

@@ -64,6 +64,18 @@ public static class IdentityApiEndpointRouteBuilderExtensions
                 return CreateValidationProblem(IdentityResult.Failed(userManager.ErrorDescriber.InvalidEmail(email)));
             }
 
+            if (await userManager.FindByEmailAsync(email) is not null)
+            {
+                return CreateValidationProblem("DuplicateEmail", "This email address is already registered.");
+            }
+
+            var existingPhone = await userManager.Users.AnyAsync(u =>
+                EF.Property<string>(u, "PhoneNumber") == registration.PhoneNumber);
+            if (existingPhone)
+            {
+                return CreateValidationProblem("DuplicatePhone", "This phone number is already in use.");
+            }
+
             var user = new TUser();
             await userStore.SetUserNameAsync(user, email, CancellationToken.None);
             await emailStore.SetEmailAsync(user, email, CancellationToken.None);
@@ -205,6 +217,11 @@ public static class IdentityApiEndpointRouteBuilderExtensions
             var token = await userManager.GenerateChangePhoneNumberTokenAsync(user, phoneNumber);
             var identityResult = await userManager.ChangePhoneNumberAsync(user, phoneNumber, token);
 
+            if (identityResult.Succeeded && user is ApplicationUser customUser)
+            {
+                customUser.IsActive = true;
+                await userManager.UpdateAsync(user);
+            }
             return identityResult.Succeeded
                 ? TypedResults.Ok()
                 : CreateValidationProblem(identityResult);
@@ -222,11 +239,11 @@ public static class IdentityApiEndpointRouteBuilderExtensions
 
             if (user is not null && await userManager.IsPhoneNumberConfirmedAsync(user))
             {
-                var code = await userManager.GeneratePasswordResetTokenAsync(user);
-                var encodedCode = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+                var code = await userManager.GenerateTwoFactorTokenAsync(user, "Phone");
+
                 bool isSent = await smsSender.SendSmsAsync(
                     resetRequest.PhoneNumber,
-                    $"Your password reset code is: {encodedCode}");
+                    $"Your password reset code is: {code}");
 
                 if (!isSent)
                 {
@@ -250,21 +267,21 @@ public static class IdentityApiEndpointRouteBuilderExtensions
             var user = await userManager.Users.FirstOrDefaultAsync(u =>
                 EF.Property<string>(u, "PhoneNumber") == resetRequest.PhoneNumber);
 
-            if (user is null || !(await userManager.IsPhoneNumberConfirmedAsync(user)))
+            if (user is null || !await userManager.IsPhoneNumberConfirmedAsync(user))
             {
                 return CreateValidationProblem(IdentityResult.Failed(userManager.ErrorDescriber.InvalidToken()));
             }
 
-            IdentityResult result;
-            try
+            var isValid = await userManager.VerifyTwoFactorTokenAsync(user, "Phone", resetRequest.ResetCode);
+
+            if (!isValid)
             {
-                var DecodedCode = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(resetRequest.ResetCode));
-                result = await userManager.ResetPasswordAsync(user, DecodedCode, resetRequest.NewPassword);
+                return CreateValidationProblem("InvalidCode", "The 6-digit code is incorrect.");
             }
-            catch (FormatException)
-            {
-                result = IdentityResult.Failed(userManager.ErrorDescriber.InvalidToken());
-            }
+
+            var internaltoken = await userManager.GeneratePasswordResetTokenAsync(user);
+            var result = await userManager.ResetPasswordAsync(user, internaltoken, resetRequest.NewPassword);
+
 
             if (!result.Succeeded)
             {
