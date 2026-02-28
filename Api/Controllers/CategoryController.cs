@@ -15,10 +15,12 @@ namespace Api.Controllers
     public class CategoryController(ISender mediator) : ApiControllerBase
     {
         [HttpGet]
+        [AllowAnonymous]
         public async Task<ActionResult> GetCategories()
            => HandleResult(await mediator.Send(new GetCategoriesQuery()));
 
         [HttpGet("{id}")]
+        [AllowAnonymous]
         public async Task<ActionResult> GetCategory(Guid id)
             => HandleResult(await mediator.Send(new GetCategoryByIdQuery(id)));
 

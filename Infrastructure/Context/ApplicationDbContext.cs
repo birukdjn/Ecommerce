@@ -15,7 +15,7 @@ namespace Infrastructure.Context
     {
         private readonly ICurrentUserService _currentUserService = currentUserService;
 
-        public override DbSet<ApplicationUser> Users => base.Users;
+        DbSet<ApplicationUser> IApplicationDbContext.Users => base.Users;
 
         // Custom DbSets
         public DbSet<Address> Addresses { get; set; }

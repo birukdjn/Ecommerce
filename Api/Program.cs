@@ -5,36 +5,42 @@ using Infrastructure;
 using Infrastructure.Identity;
 
 
-var builder = WebApplication.CreateBuilder(args);
-
-builder.Services
-    .AddApiServices()
-    .AddApplicationServices()
-    .AddInfrastructureServices(builder.Configuration);
-
-
-
-var app = builder.Build();
-
-using (var scope = app.Services.CreateScope())
+public partial class Program
 {
-    var services = scope.ServiceProvider;
-    try
+    private static async Task Main(string[] args)
     {
-        await IdentityDataSeeder.SeedAllAsync(services);
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"An error occurred seeding the DB: {ex.Message}");
+        var builder = WebApplication.CreateBuilder(args);
+
+        builder.Services
+            .AddApiServices()
+            .AddApplicationServices()
+            .AddInfrastructureServices(builder.Configuration);
+
+
+
+        var app = builder.Build();
+
+        using (var scope = app.Services.CreateScope())
+        {
+            var services = scope.ServiceProvider;
+            try
+            {
+                await IdentityDataSeeder.SeedAllAsync(services);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred seeding the DB: {ex.Message}");
+            }
+        }
+
+        app.UseApiMiddleware();
+
+        app.MapGroup("/api/auth")
+            .WithTags("Auth")
+            .MapCustomIdentityApi<ApplicationUser>();
+
+        app.MapControllers();
+
+        app.Run();
     }
 }
-
-app.UseApiMiddleware();
-
-app.MapGroup("/api/auth")
-    .WithTags("Auth")
-    .MapCustomIdentityApi<ApplicationUser>();
-
-app.MapControllers();
-
-app.Run();
