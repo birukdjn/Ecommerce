@@ -11,19 +11,19 @@ namespace Application.Features.Categories.Commands.DeleteCategory
         IApplicationDbContext context)
         : IRequestHandler<DeleteCategoryCommand, Result<bool>>
     {
-        public async Task<Result<bool>> Handle(DeleteCategoryCommand request, CancellationToken ct)
+        public async Task<Result<bool>> Handle(DeleteCategoryCommand request, CancellationToken cancellationToken)
         {
             var categoryRepo = unitOfWork.Repository<Category>();
 
             var category = await categoryRepo.GetByIdAsync(request.Id);
-            if (category == null)
+            if (category == null || category.IsDeleted)
                 return Result<bool>.Failure("Category not found.");
 
             var hasProducts = await context.ProductCategories
-                .AnyAsync(pc => pc.CategoryId == request.Id, ct);
+                .AnyAsync(pc => pc.CategoryId == request.Id && !pc.Product.IsDeleted, cancellationToken);
 
             if (hasProducts)
-                return Result<bool>.Failure("Cannot delete category because it contains products. Move or delete the products first.");
+                return Result<bool>.Failure("Cannot delete category because it contains active products.");
 
             categoryRepo.Delete(category);
 

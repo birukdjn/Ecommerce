@@ -1,9 +1,9 @@
 ﻿
 namespace Domain.Common.Interfaces
 {
-    public interface IUnitOfWork: IDisposable
+    public interface IUnitOfWork : IDisposable
     {
-        IGenericRepository<T> Repository<T>() where T : class;
-        Task<int> Complete(); 
+        IGenericRepository<T> Repository<T>() where T : BaseEntity;
+        Task<int> Complete();
     }
 }

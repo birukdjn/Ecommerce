@@ -12,19 +12,13 @@ namespace Infrastructure.Repositories
 
         public async Task<T?> GetByIdAsync(Guid id)
         {
-            
             return await _context.Set<T>()
-                .FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted);
+                .FirstOrDefaultAsync(x => x.Id == id);
         }
-
-        public async Task<T?> GetByIdAsync() =>
-            await _context.Set<T>().FindAsync();
 
         public async Task<IReadOnlyList<T>> ListAllAsync()
         {
-            return await _context.Set<T>()
-                .Where(x => !x.IsDeleted)
-                .ToListAsync();
+            return await _context.Set<T>().ToListAsync();
         }
 
         public async Task<T?> GetWithDeletedAsync(Expression<Func<T, bool>> predicate)
@@ -42,9 +36,7 @@ namespace Infrastructure.Repositories
 
         public void Delete(T entity)
         {
-            entity.IsDeleted = true;
-            entity.LastModifiedAt = DateTime.UtcNow;
-            _context.Set<T>().Update(entity);
+            _context.Set<T>().Remove(entity);
         }
     }
 }

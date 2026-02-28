@@ -37,20 +37,34 @@ namespace Infrastructure.Context
         public DbSet<WalletTransaction> WalletTransactions { get; set; }
 
         public new DatabaseFacade Database => base.Database;
-        public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+
+        public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
-            return await base.SaveChangesAsync(cancellationToken);
+            foreach (var entry in ChangeTracker.Entries<BaseEntity>())
+            {
+                switch (entry.State)
+                {
+                    case EntityState.Added:
+                        entry.Entity.CreatedAt = DateTime.UtcNow;
+                        break;
+                    case EntityState.Modified:
+                        entry.Entity.LastModifiedAt = DateTime.UtcNow;
+                        break;
+                    case EntityState.Deleted:
+                        entry.State = EntityState.Modified;
+                        entry.Entity.IsDeleted = true;
+                        entry.Entity.LastModifiedAt = DateTime.UtcNow;
+                        break;
+                }
+            }
+            return base.SaveChangesAsync(cancellationToken);
         }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
-
-
             base.OnModelCreating(builder);
 
-            var assembly = typeof(ApplicationDbContext).Assembly;
-
-            builder.ApplyConfigurationsFromAssembly(assembly);
+            builder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
 
             foreach (var property in builder.Model.GetEntityTypes()
                  .SelectMany(t => t.GetProperties())
@@ -69,37 +83,31 @@ namespace Infrastructure.Context
                         .HasColumnType("xid")
                         .ValueGeneratedOnAddOrUpdate()
                         .IsConcurrencyToken();
-                }
-            }
 
-            // GLOBAL SOFT DELETE FILTER
-            foreach (var entityType in builder.Model.GetEntityTypes())
-            {
-                if (typeof(BaseEntity).IsAssignableFrom(entityType.ClrType))
-                {
                     builder.Entity(entityType.ClrType).HasQueryFilter(ConvertFilterExpression(entityType.ClrType));
+
                 }
             }
 
             // LOGICAL MULTI-TENANCY FILTERS
 
-            builder.Entity<SubOrder>()
-               .HasQueryFilter(p =>
-                   _currentUserService.IsAdmin() ||
-                   (!p.IsDeleted && (
-                       _currentUserService.GetCurrentVendorId() == null ||
-                       p.VendorId == _currentUserService.GetCurrentVendorId()
-                   ))
-               );
-
-            builder.Entity<Product>()
-                .HasQueryFilter(p =>
-                    _currentUserService.IsAdmin() ||
-                    (!p.IsDeleted && (
+            builder.Entity<Product>().HasQueryFilter(p =>
+                _currentUserService.IsAdmin() || (
+                    !p.IsDeleted && (
                         _currentUserService.GetCurrentVendorId() == null ||
                         p.VendorId == _currentUserService.GetCurrentVendorId()
-                    ))
-                );
+                    )
+                )
+            );
+
+            builder.Entity<SubOrder>().HasQueryFilter(p =>
+                _currentUserService.IsAdmin() || (
+                    !p.IsDeleted && (
+                        _currentUserService.GetCurrentVendorId() == null ||
+                        p.VendorId == _currentUserService.GetCurrentVendorId()
+                    )
+                )
+            );
         }
 
 
@@ -107,8 +115,10 @@ namespace Infrastructure.Context
         private static LambdaExpression ConvertFilterExpression(Type type)
         {
             var parameter = Expression.Parameter(type, "it");
-            var body = Expression.Equal(Expression.Property(parameter, nameof(BaseEntity.IsDeleted)), Expression.Constant(false));
-            return Expression.Lambda(body, parameter);
+            var isDeletedProp = Expression.Property(parameter, nameof(BaseEntity.IsDeleted));
+            var isFalse = Expression.Constant(false);
+            var condition = Expression.Equal(isDeletedProp, isFalse);
+            return Expression.Lambda(condition, parameter);
 
         }
     }

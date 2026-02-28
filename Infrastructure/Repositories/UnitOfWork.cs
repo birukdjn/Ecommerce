@@ -1,4 +1,5 @@
-﻿using Domain.Common.Interfaces;
+﻿using Domain.Common;
+using Domain.Common.Interfaces;
 using Infrastructure.Context;
 using System.Collections;
 
@@ -8,7 +9,7 @@ namespace Infrastructure.Repositories
     {
         private Hashtable? _repositories;
 
-        public IGenericRepository<T> Repository<T>() where T : class
+        public IGenericRepository<T> Repository<T>() where T : BaseEntity
         {
             _repositories ??= new Hashtable();
             var type = typeof(T).Name;
