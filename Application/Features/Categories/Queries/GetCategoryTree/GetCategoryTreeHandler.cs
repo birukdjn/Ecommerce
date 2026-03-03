@@ -1,4 +1,5 @@
 using Application.DTOs;
+using Domain.Common;
 using Domain.Common.Interfaces;
 using Domain.Entities;
 using MediatR;
@@ -7,21 +8,18 @@ using Microsoft.EntityFrameworkCore;
 namespace Application.Features.Categories.Queries.GetCategoryTree
 {
     public class GetCategoryTreeHandler(IUnitOfWork unitOfWork)
-    : IRequestHandler<GetCategoryTreeQuery, List<CategoryDto>>
+     : IRequestHandler<GetCategoryTreeQuery, Result<List<CategoryDto>>>
     {
-        public async Task<List<CategoryDto>> Handle(GetCategoryTreeQuery request, CancellationToken ct)
+        public async Task<Result<List<CategoryDto>>> Handle(GetCategoryTreeQuery request, CancellationToken ct)
         {
-
             var allCategories = await unitOfWork.Repository<Category>()
                 .Query()
                 .AsNoTracking()
                 .Include(x => x.ParentCategory)
                 .ToListAsync(ct);
 
-            // 2. Build the lookup
             var lookup = allCategories.ToLookup(c => c.ParentCategoryId);
 
-            // 3. Recursive function to build DTOs
             List<CategoryDto> BuildTree(Guid? parentId)
             {
                 return lookup[parentId]
@@ -33,7 +31,8 @@ namespace Application.Features.Categories.Queries.GetCategoryTree
                     }).ToList();
             }
 
-            return BuildTree(null);
+            var tree = BuildTree(null);
+            return Result<List<CategoryDto>>.Success(tree);
         }
     }
 }
