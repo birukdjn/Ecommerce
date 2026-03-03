@@ -3,6 +3,7 @@ using Domain.Common.Interfaces;
 using Domain.Entities;
 using Domain.Enums;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace Application.Features.Products.Commands.CreateProduct
 {
@@ -35,8 +36,29 @@ namespace Application.Features.Products.Commands.CreateProduct
                 IsApproved = false
             };
 
+            var rootCategoryIds = new HashSet<Guid>();
             foreach (var catId in request.CategoryIds)
             {
+                var category = await unitOfWork.Repository<Category>()
+                    .Query()
+                    .Include(c => c.ChildCategories)
+                    .Include(c => c.ParentCategory)
+                    .FirstOrDefaultAsync(c => c.Id == catId);
+
+                if (category == null) return Result<Guid>.Failure($"Category {catId} not found.");
+
+                if (category.ChildCategories.Any())
+                    return Result<Guid>.Failure($"'{category.Name}' is a parent category. Please pick a specific sub-category.");
+                var root = category;
+                while (root.ParentCategoryId.HasValue)
+                {
+                    root = await unitOfWork.Repository<Category>().GetByIdAsync(root.ParentCategoryId.Value)
+                           ?? throw new Exception("Database inconsistency: Parent not found.");
+                }
+                rootCategoryIds.Add(root.Id);
+                if (rootCategoryIds.Count > 1)
+                    return Result<Guid>.Failure("A product cannot belong to two different departments (e.g., Electronics and Clothing).");
+
                 product.ProductCategories.Add(new ProductCategory
                 {
                     ProductId = product.Id,
