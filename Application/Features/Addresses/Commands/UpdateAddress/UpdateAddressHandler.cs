@@ -5,7 +5,7 @@ using MediatR;
 
 namespace Application.Features.Addresses.Commands.UpdateAddress
 {
-    public class UpdateAddressCommandHandler(IUnitOfWork unitOfWork, ICurrentUserService currentUserService)
+    public class UpdateAddressHandler(IUnitOfWork unitOfWork, ICurrentUserService currentUserService)
     : IRequestHandler<UpdateAddressCommand, Result<Guid>>
     {
         public async Task<Result<Guid>> Handle(UpdateAddressCommand request, CancellationToken cancellationToken)

@@ -1,5 +1,4 @@
-﻿using Application.DTOs;
-using Application.Features.Users.Commands.Identity;
+﻿using Application.Features.Users.Commands.Identity;
 using Application.Interfaces;
 using Domain.Constants;
 using Domain.Entities;
@@ -17,6 +16,7 @@ using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Npgsql.Replication.PgOutput.Messages;
 using System.ComponentModel.DataAnnotations;
 using System.Diagnostics;
 using System.Security.Claims;
@@ -45,10 +45,10 @@ public static class IdentityApiEndpointRouteBuilderExtensions
 
         // POST: /register
         routeGroup.MapPost("/register", async Task<Results<Ok<string>, ValidationProblem>>
-            ([FromBody] RegisterCommand registration, HttpContext context, [FromServices] IServiceProvider serviceProvider) =>
+            ([FromBody] RegisterCommand command, HttpContext context, [FromServices] IServiceProvider serviceProvider) =>
         {
             var userManager = serviceProvider.GetRequiredService<UserManager<TUser>>();
-            var sms = serviceProvider.GetRequiredService<ISmsSender>();
+            var smsSender = serviceProvider.GetRequiredService<ISmsSender>();
 
             if (!userManager.SupportsUserEmail)
             {
@@ -57,7 +57,13 @@ public static class IdentityApiEndpointRouteBuilderExtensions
 
             var userStore = serviceProvider.GetRequiredService<IUserStore<TUser>>();
             var emailStore = (IUserEmailStore<TUser>)userStore;
-            var email = registration.Email;
+
+            var email = command.Email;
+            var phone = command.PhoneNumber;
+            var fullName = command.FullName;
+            var profilePicture = command.ProfilePictureUrl;
+            var password = command.Password;
+
 
             if (string.IsNullOrEmpty(email) || !_emailAddressAttribute.IsValid(email))
             {
@@ -70,7 +76,7 @@ public static class IdentityApiEndpointRouteBuilderExtensions
             }
 
             var existingPhone = await userManager.Users.AnyAsync(u =>
-                EF.Property<string>(u, "PhoneNumber") == registration.PhoneNumber);
+                EF.Property<string>(u, "PhoneNumber") == phone);
             if (existingPhone)
             {
                 return CreateValidationProblem("DuplicatePhone", "This phone number is already in use.");
@@ -82,11 +88,11 @@ public static class IdentityApiEndpointRouteBuilderExtensions
 
             if (user is ApplicationUser customUser)
             {
-                customUser.FullName = registration.FullName;
-                customUser.ProfilePictureUrl = registration.ProfilePictureUrl;
+                customUser.FullName = fullName;
+                customUser.ProfilePictureUrl = profilePicture;
             }
-            await userManager.SetPhoneNumberAsync(user, registration.PhoneNumber);
-            var result = await userManager.CreateAsync(user, registration.Password);
+            await userManager.SetPhoneNumberAsync(user, phone);
+            var result = await userManager.CreateAsync(user, password);
 
             if (!result.Succeeded)
             {
@@ -97,11 +103,11 @@ public static class IdentityApiEndpointRouteBuilderExtensions
 
             // await SendConfirmationEmailAsync(user, userManager, context, email);
 
-            var phoneNumber = await userManager.GetPhoneNumberAsync(user);
+            var addedPhoneNumber = await userManager.GetPhoneNumberAsync(user);
 
-            if (!string.IsNullOrEmpty(phoneNumber))
+            if (!string.IsNullOrEmpty(addedPhoneNumber))
             {
-                var smsResult = await sms.SendSmsChallengeAsync(phoneNumber);
+                var smsResult = await smsSender.SendSmsChallengeAsync(addedPhoneNumber);
                 if (smsResult.IsSuccess)
                 {
                     return TypedResults.Ok(smsResult.Value);
@@ -114,7 +120,7 @@ public static class IdentityApiEndpointRouteBuilderExtensions
 
         // POST: /login
         routeGroup.MapPost("/login", async Task<Results<SignInHttpResult, ProblemHttpResult>>
-            ([FromBody] LoginCommand login, [FromServices] IServiceProvider sp) =>
+            ([FromBody] LoginCommand command, [FromServices] IServiceProvider sp) =>
         {
 
             var userManager = sp.GetRequiredService<UserManager<TUser>>();
@@ -124,36 +130,36 @@ public static class IdentityApiEndpointRouteBuilderExtensions
 
             TUser? user = null;
 
-            if (_emailAddressAttribute.IsValid(login.PhoneOrEmail))
+            if (_emailAddressAttribute.IsValid(command.PhoneOrEmail))
             {
-                user = await userManager.FindByEmailAsync(login.PhoneOrEmail);
+                user = await userManager.FindByEmailAsync(command.PhoneOrEmail);
             }
 
             user ??= await userManager.Users.FirstOrDefaultAsync(u =>
-                EF.Property<string>(u, "PhoneNumber") == login.PhoneOrEmail);
+                EF.Property<string>(u, "PhoneNumber") == command.PhoneOrEmail);
             if (user == null)
             {
                 return TypedResults.Problem("Invalid login attempt.", statusCode: StatusCodes.Status401Unauthorized);
             }
             var result = await signInManager.CheckPasswordSignInAsync(
                          user,
-                         login.Password,
+                         command.Password,
                          lockoutOnFailure: true);
 
             /*
                 if (result.RequiresTwoFactor)
                 {
-                    if (!string.IsNullOrEmpty(login.TwoFactorCode))
+                    if (!string.IsNullOrEmpty(command.TwoFactorCode))
                     {
                         result = await signInManager.TwoFactorAuthenticatorSignInAsync
                         (
-                            login.TwoFactorCode, 
-                            login.RememberMe,
-                            rememberClient: login.RememberMe);
+                            command.TwoFactorCode, 
+                            command.RememberMe,
+                            rememberClient: command.RememberMe);
                     }
-                    else if (!string.IsNullOrEmpty(login.TwoFactorRecoveryCode))
+                    else if (!string.IsNullOrEmpty(command.TwoFactorRecoveryCode))
                     {
-                        result = await signInManager.TwoFactorRecoveryCodeSignInAsync(login.TwoFactorRecoveryCode);
+                        result = await signInManager.TwoFactorRecoveryCodeSignInAsync(command.TwoFactorRecoveryCode);
                     }
                 }
             */
@@ -194,13 +200,16 @@ public static class IdentityApiEndpointRouteBuilderExtensions
 
         // POST: /verify-phone
         routeGroup.MapPost("/verify-phone", async Task<Results<Ok, ValidationProblem, NotFound>>
-            (string phoneNumber, string code, string verificationId, [FromServices] IServiceProvider sp) =>
+            (VerifyPhoneCommand command, [FromServices] IServiceProvider sp) =>
         {
             var userManager = sp.GetRequiredService<UserManager<TUser>>();
             var smsSender = sp.GetRequiredService<ISmsSender>();
+            var phone = command.PhoneNumber;
+            var code = command.Code;
+            var verificationId = command.VerificationId;
 
             // 1. Verify code with AfroSms
-            var verificationResult = await smsSender.VerifyCodeAsync(phoneNumber, code, verificationId);
+            var verificationResult = await smsSender.VerifyCodeAsync(phone, code, verificationId);
 
             if (!verificationResult.IsSuccess)
             {
@@ -209,13 +218,13 @@ public static class IdentityApiEndpointRouteBuilderExtensions
 
             // 2. Update User in Database
             var user = await userManager.Users.FirstOrDefaultAsync(u =>
-                EF.Property<string>(u, "PhoneNumber") == phoneNumber);
+                EF.Property<string>(u, "PhoneNumber") == phone);
 
             if (user == null) return TypedResults.NotFound();
 
             // Mark as confirmed
-            var token = await userManager.GenerateChangePhoneNumberTokenAsync(user, phoneNumber);
-            var identityResult = await userManager.ChangePhoneNumberAsync(user, phoneNumber, token);
+            var token = await userManager.GenerateChangePhoneNumberTokenAsync(user, phone);
+            var identityResult = await userManager.ChangePhoneNumberAsync(user, phone, token);
 
             if (identityResult.Succeeded && user is ApplicationUser customUser)
             {
@@ -230,19 +239,20 @@ public static class IdentityApiEndpointRouteBuilderExtensions
 
         // POST: /forgotPassword
         routeGroup.MapPost("/forgot-password", async Task<Results<Ok<object>, ValidationProblem>>
-            ([FromBody] ForgotPasswordRequestDto resetRequest, [FromServices] IServiceProvider sp) =>
+            ([FromBody] ForgotPasswordCommand command, [FromServices] IServiceProvider sp) =>
         {
             var userManager = sp.GetRequiredService<UserManager<TUser>>();
             var smsSender = sp.GetRequiredService<ISmsSender>();
+            var phone = command.PhoneNumber;
             var user = await userManager.Users.FirstOrDefaultAsync(u =>
-                 EF.Property<string>(u, "PhoneNumber") == resetRequest.PhoneNumber);
+                 EF.Property<string>(u, "PhoneNumber") == phone);
 
             if (user is not null && await userManager.IsPhoneNumberConfirmedAsync(user))
             {
                 var code = await userManager.GenerateTwoFactorTokenAsync(user, "Phone");
 
                 bool isSent = await smsSender.SendSmsAsync(
-                    resetRequest.PhoneNumber,
+                    phone,
                     $"Your password reset code is: {code}");
 
                 if (!isSent)
@@ -260,19 +270,23 @@ public static class IdentityApiEndpointRouteBuilderExtensions
 
         // POST: /resetPassword
         routeGroup.MapPost("/reset-password", async Task<Results<Ok<object>, ValidationProblem>>
-            ([FromBody] ResetPasswordRequestByPhone resetRequest, [FromServices] IServiceProvider sp) =>
+            ([FromBody] ResetPasswordCommand command, [FromServices] IServiceProvider sp) =>
         {
             var userManager = sp.GetRequiredService<UserManager<TUser>>();
 
+            var phone = command.PhoneNumber;
+            var resetCode = command.ResetCode;
+            var newPassword = command.NewPassword;
+
             var user = await userManager.Users.FirstOrDefaultAsync(u =>
-                EF.Property<string>(u, "PhoneNumber") == resetRequest.PhoneNumber);
+                EF.Property<string>(u, "PhoneNumber") == phone);
 
             if (user is null || !await userManager.IsPhoneNumberConfirmedAsync(user))
             {
                 return CreateValidationProblem(IdentityResult.Failed(userManager.ErrorDescriber.InvalidToken()));
             }
 
-            var isValid = await userManager.VerifyTwoFactorTokenAsync(user, "Phone", resetRequest.ResetCode);
+            var isValid = await userManager.VerifyTwoFactorTokenAsync(user, "Phone", resetCode);
 
             if (!isValid)
             {
@@ -280,7 +294,7 @@ public static class IdentityApiEndpointRouteBuilderExtensions
             }
 
             var internaltoken = await userManager.GeneratePasswordResetTokenAsync(user);
-            var result = await userManager.ResetPasswordAsync(user, internaltoken, resetRequest.NewPassword);
+            var result = await userManager.ResetPasswordAsync(user, internaltoken, newPassword);
 
 
             if (!result.Succeeded)

@@ -1,11 +1,10 @@
-﻿
-using Domain.Common;
+﻿using Domain.Common;
 using Domain.Common.Interfaces;
 using Domain.Entities;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 
-namespace Application.Features.Profile.Commands.UpdateProfile
+namespace Application.Features.Users.Commands.UpdateProfile
 {
     public class UpdateProfileCommandHandler(
     UserManager<ApplicationUser> userManager,
@@ -16,7 +15,7 @@ namespace Application.Features.Profile.Commands.UpdateProfile
         {
             var userId = currentUserService.GetCurrentUserId();
 
-            if (userId == null || userId ==Guid.Empty) return Result<Guid>.Failure("User not authenticated.");
+            if (userId == null || userId == Guid.Empty) return Result<Guid>.Failure("User not authenticated.");
 
             var user = await userManager.FindByIdAsync(userId.ToString()!);
             if (user == null) return Result<Guid>.Failure("User not found.");

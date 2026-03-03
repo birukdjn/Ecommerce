@@ -5,7 +5,7 @@ using MediatR;
 
 namespace Application.Features.Addresses.Commands.SetDefaultAddress
 {
-    public class SetDefaultAddressCommandHandler(IUnitOfWork unitOfWork, ICurrentUserService currentUserService)
+    public class SetDefaultAddressHandler(IUnitOfWork unitOfWork, ICurrentUserService currentUserService)
     : IRequestHandler<SetDefaultAddressCommand, Result<bool>>
     {
         public async Task<Result<bool>> Handle(SetDefaultAddressCommand request, CancellationToken ct)

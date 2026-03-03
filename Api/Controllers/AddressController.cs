@@ -1,7 +1,9 @@
 ﻿using Application.Features.Addresses.Commands.CreateAddress;
 using Application.Features.Addresses.Commands.DeleteAddress;
+using Application.Features.Addresses.Commands.RestoreAddress;
 using Application.Features.Addresses.Commands.SetDefaultAddress;
 using Application.Features.Addresses.Commands.UpdateAddress;
+using Application.Features.Addresses.Queries.GetAddressById;
 using Application.Features.Addresses.Queries.GetAddresses;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -37,6 +39,10 @@ namespace Api.Controllers
         [HttpDelete("{id}")]
         public async Task<ActionResult> Delete(Guid id)
             => HandleResult(await mediator.Send(new DeleteAddressCommand(id)));
+
+        [HttpPatch("{id}/restore")]
+        public async Task<ActionResult> Restore(Guid id)
+        => HandleResult(await mediator.Send(new RestoreAddressCommand(id)));
 
         [HttpPatch("{id}/default")]
         public async Task<ActionResult> SetDefault(Guid id)

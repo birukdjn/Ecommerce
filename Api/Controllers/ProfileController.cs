@@ -1,4 +1,4 @@
-﻿using Application.Features.Profile.Commands.UpdateProfile;
+﻿using Application.Features.Users.Commands.UpdateProfile;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

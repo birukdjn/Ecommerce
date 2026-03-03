@@ -6,7 +6,7 @@ using MediatR;
 
 namespace Application.Features.Addresses.Commands.CreateAddress
 {
-    internal class CreateAddressCommandHandler(
+    internal class CreateAddressHandler(
     IUnitOfWork unitOfWork,
     ICurrentUserService currentUserService) : IRequestHandler<CreateAddressCommand, Result<Guid>>
     {

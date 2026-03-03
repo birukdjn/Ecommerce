@@ -7,19 +7,19 @@ using Domain.Enums;
 namespace Application.Features.Admins.Commands.ToggleVendorStatus
 {
 
-    public class ToggleVendorStatusCommandHandler(IUnitOfWork unitOfWork)
+    public class ToggleVendorStatusHandler(IUnitOfWork unitOfWork)
         : IRequestHandler<ToggleVendorStatusCommand, Result<bool>>
     {
-        public async Task<Result<bool>> Handle(ToggleVendorStatusCommand request, CancellationToken ct)
+        public async Task<Result<bool>> Handle(ToggleVendorStatusCommand command, CancellationToken cancellationToken)
         {
             var vendorRepo = unitOfWork.Repository<Vendor>();
 
-            var vendor = await vendorRepo.GetByIdAsync(request.VendorId);
+            var vendor = await vendorRepo.GetByIdAsync(command.VendorId);
 
             if (vendor == null)
                 return Result<bool>.Failure("Vendor not found.");
 
-            vendor.Status = request.IsActive
+            vendor.Status = command.IsActive
                 ? VendorStatus.Active
                 : VendorStatus.Suspended;
 

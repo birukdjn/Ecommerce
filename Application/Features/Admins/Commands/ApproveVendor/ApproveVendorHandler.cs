@@ -10,16 +10,16 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Application.Features.Admins.Commands.ApproveVendor
 {
-    public class ApproveVendorCommandHandler(
+    public class ApproveVendorHandler(
         IApplicationDbContext context,
         UserManager<ApplicationUser> userManager) : IRequestHandler<ApproveVendorCommand, Result<bool>>
     {
-        public async Task<Result<bool>> Handle(ApproveVendorCommand request, CancellationToken cancellationToken)
+        public async Task<Result<bool>> Handle(ApproveVendorCommand command, CancellationToken cancellationToken)
         {
             var vendor = await context.Vendors
                 .IgnoreQueryFilters()
                 .Include(v => v.User)
-                .FirstOrDefaultAsync(v => v.Id == request.VendorId, cancellationToken);
+                .FirstOrDefaultAsync(v => v.Id == command.VendorId, cancellationToken);
 
             if (vendor == null)
                 return Result<bool>.Failure("Vendor request not found.");

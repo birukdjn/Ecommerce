@@ -5,7 +5,7 @@ using MediatR;
 
 namespace Application.Features.Addresses.Commands.DeleteAddress
 {
-    public class DeleteAddressCommandHandler(IUnitOfWork unitOfWork, ICurrentUserService currentUserService)
+    public class DeleteAddressHandler(IUnitOfWork unitOfWork, ICurrentUserService currentUserService)
     : IRequestHandler<DeleteAddressCommand, Result<bool>>
     {
         public async Task<Result<bool>> Handle(DeleteAddressCommand request, CancellationToken ct)
