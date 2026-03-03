@@ -2,7 +2,7 @@
 
 namespace Domain.Entities
 {
-    public class Category:BaseEntity
+    public class Category : BaseEntity
     {
         public required string Name { get; set; }
         public string? Description { get; set; }
@@ -15,6 +15,24 @@ namespace Domain.Entities
         public virtual ICollection<Category> ChildCategories { get; set; } = [];
         public virtual ICollection<ProductCategory> ProductCategories { get; set; } = [];
 
+        public decimal GetEffectiveCommission()
+        {
+            if (CommissionPercentage > 0) return CommissionPercentage;
+
+            return ParentCategory?.GetEffectiveCommission() ?? 0;
+        }
+
+        public List<string> GetCategoryPath()
+        {
+            var path = new List<string>();
+            Category? current = this;
+            while (current != null)
+            {
+                path.Insert(0, current.Name);
+                current = current.ParentCategory;
+            }
+            return path;
+        }
 
     }
 }

@@ -13,8 +13,13 @@ namespace Application.Features.Categories.Queries.GetCategoryById
         {
             var category = await context.Categories
                 .Where(c => c.Id == request.Id)
-                .Select(c => new CategoryDto(c.Id, c.Name, c.Description))
-                .FirstOrDefaultAsync(ct);
+                .Select(c => new CategoryDto
+                {
+                    Id = c.Id,
+                    Name = c.Name,
+                    Description = c.Description
+                }).FirstOrDefaultAsync(ct);
+
 
             if (category == null)
                 return Result<CategoryDto>.Failure("Category not found.");

@@ -10,6 +10,11 @@ namespace Infrastructure.Repositories
     {
         protected readonly ApplicationDbContext _context = context;
 
+        public IQueryable<T> Query()
+        {
+            return _context.Set<T>().AsQueryable();
+        }
+
         public async Task<T?> GetByIdAsync(Guid id)
         {
             return await _context.Set<T>()

@@ -6,5 +6,8 @@ namespace Application.Features.Categories.Commands.CreateCategory
     public record CreateCategoryCommand
     (
         string Name,
-        string? Description) : IRequest<Result<Guid>>;
+        string? Description,
+        Guid? ParentCategoryId,
+        decimal CommissionPercentage
+    ) : IRequest<Result<Guid>>;
 }

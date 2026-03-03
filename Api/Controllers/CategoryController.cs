@@ -4,6 +4,7 @@ using Application.Features.Categories.Commands.DeleteCategory;
 using Application.Features.Categories.Commands.UpdateCategory;
 using Application.Features.Categories.Queries.GetCategories;
 using Application.Features.Categories.Queries.GetCategoryById;
+using Application.Features.Categories.Queries.GetCategoryTree;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -19,6 +20,11 @@ namespace Api.Controllers
         public async Task<ActionResult> GetCategories()
            => HandleResult(await mediator.Send(new GetCategoriesQuery()));
 
+        [HttpGet("tree")]
+        [AllowAnonymous]
+        public async Task<ActionResult<List<CategoryDto>>> GetCategoryTree()
+            => HandleResult(await mediator.Send(new GetCategoryTreeQuery()));
+
         [HttpGet("{id}")]
         [AllowAnonymous]
         public async Task<ActionResult> GetCategory(Guid id)
@@ -30,7 +36,12 @@ namespace Api.Controllers
 
         [HttpPut("{id}")]
         public async Task<ActionResult> UpdateCategory(Guid id, [FromBody] UpdateCategoryRequest dto)
-            => HandleResult(await mediator.Send(new UpdateCategoryCommand(id, dto.Name, dto.Description)));
+            => HandleResult(await mediator.Send(new UpdateCategoryCommand(
+                id,
+                dto.Name,
+                dto.Description,
+                dto.ParentCategoryId,
+                dto.CommissionPercentage)));
 
         [HttpDelete("{id}")]
         public async Task<ActionResult> DeleteCategory(Guid id)
