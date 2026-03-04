@@ -36,6 +36,7 @@ public class GetProductsByCategoryHandler(IUnitOfWork unitOfWork)
             "priceAsc" => query.OrderBy(p => p.Price),
             "priceDesc" => query.OrderByDescending(p => p.Price),
             _ => query.OrderByDescending(p => p.CreatedAt)
+            .ThenByDescending(p => p.StockQuantity)
         };
 
         var totalItems = await query.CountAsync(ct);
