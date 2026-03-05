@@ -2,26 +2,34 @@
 using Domain.Common.Interfaces;
 using Domain.Entities;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace Application.Features.Addresses.Commands.UpdateAddress
 {
     public class UpdateAddressHandler(IUnitOfWork unitOfWork, ICurrentUserService currentUserService)
     : IRequestHandler<UpdateAddressCommand, Result<Guid>>
     {
-        public async Task<Result<Guid>> Handle(UpdateAddressCommand request, CancellationToken cancellationToken)
+        public async Task<Result<Guid>> Handle(UpdateAddressCommand command, CancellationToken cancellationToken)
         {
             var userId = currentUserService.GetCurrentUserId();
+
+            if (userId == null || userId == Guid.Empty)
+                return Result<Guid>.Failure("User not authenticated.");
+
             var repo = unitOfWork.Repository<Address>();
 
-            var address = await repo.GetByIdAsync(request.Id);
+            var address = await repo.Query()
+              .FirstOrDefaultAsync(a => a.Id == command.Id && a.UserId == userId, cancellationToken);
 
-            if (address == null || address.UserId != userId)
-                return Result<Guid>.Failure("Address not found or unauthorized.");
+            if (address == null)
+                return Result<Guid>.Failure("Address not found.");
 
-            if (request.IsDefault && !address.IsDefault)
+            if (command.IsDefault && !address.IsDefault)
             {
-                var all = await repo.ListAllAsync();
-                var others = all.Where(a => a.UserId == userId && a.Id != address.Id);
+                var others = await repo.Query()
+                    .Where(a => a.UserId == userId && a.Id != address.Id)
+                    .ToListAsync(cancellationToken);
+
                 foreach (var other in others)
                 {
                     other.IsDefault = false;
@@ -29,11 +37,11 @@ namespace Application.Features.Addresses.Commands.UpdateAddress
                 }
             }
 
-            address.Country = request.Country;
-            address.Region = request.Region;
-            address.City = request.City;
-            address.SpecialPlaceName = request.SpecialPlaceName;
-            address.IsDefault = request.IsDefault;
+            address.Country = command.Country;
+            address.Region = command.Region;
+            address.City = command.City;
+            address.SpecialPlaceName = command.SpecialPlaceName;
+            address.IsDefault = command.IsDefault;
 
             repo.Update(address);
             var result = await unitOfWork.Complete();

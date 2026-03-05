@@ -2,29 +2,40 @@
 using Domain.Common.Interfaces;
 using Domain.Entities;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace Application.Features.Addresses.Commands.SetDefaultAddress
 {
-    public class SetDefaultAddressHandler(IUnitOfWork unitOfWork, ICurrentUserService currentUserService)
-    : IRequestHandler<SetDefaultAddressCommand, Result<bool>>
+    public class SetDefaultAddressHandler(
+        IUnitOfWork unitOfWork,
+        ICurrentUserService currentUserService) : IRequestHandler<SetDefaultAddressCommand, Result<bool>>
     {
-        public async Task<Result<bool>> Handle(SetDefaultAddressCommand request, CancellationToken ct)
+        public async Task<Result<bool>> Handle(SetDefaultAddressCommand command, CancellationToken cancellationToken)
         {
             var userId = currentUserService.GetCurrentUserId();
+            if (userId == null || userId == Guid.Empty)
+                return Result<bool>.Failure("User not authenticated.");
+
             var repo = unitOfWork.Repository<Address>();
 
-            
-            var activeAddresses = await unitOfWork.Repository<Address>().ListAllAsync();
-            var userAddresses = activeAddresses.Where(a => a.UserId == userId);
+            // Fetch all addresses for the user, including deleted if necessary
+            var userAddresses = await repo.Query()
+                .Where(a => a.UserId == userId)
+                .ToListAsync(cancellationToken);
 
-            // 2. Update logic
+            if (!userAddresses.Any(a => a.Id == command.Id))
+                return Result<bool>.Failure("Address not found.");
+
+            // Set the selected address as default, others as not default
             foreach (var address in userAddresses)
             {
-                address.IsDefault = (address.Id == request.Id);
-                unitOfWork.Repository<Address>().Update(address);
+                address.IsDefault = (address.Id == command.Id);
+                repo.Update(address);
             }
 
-            return await unitOfWork.Complete() > 0
+            var result = await unitOfWork.Complete();
+
+            return result > 0
                 ? Result<bool>.Success(true)
                 : Result<bool>.Failure("Failed to update default address.");
         }

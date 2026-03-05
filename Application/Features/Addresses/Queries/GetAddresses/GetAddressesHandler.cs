@@ -1,27 +1,39 @@
-﻿using Domain.Common;
+﻿using Application.DTOs.Address;
+using Domain.Common;
 using Domain.Common.Interfaces;
 using Domain.Entities;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace Application.Features.Addresses.Queries.GetAddresses
 {
     public class GetAddressesHandler(IUnitOfWork unitOfWork, ICurrentUserService currentUserService)
-    : IRequestHandler<GetAddressesQuery, Result<IReadOnlyList<Address>>>
+    : IRequestHandler<GetAddressesQuery, Result<IReadOnlyList<AddressDto>>>
     {
-        public async Task<Result<IReadOnlyList<Address>>> Handle(GetAddressesQuery request, CancellationToken ct)
+        public async Task<Result<IReadOnlyList<AddressDto>>> Handle(GetAddressesQuery request, CancellationToken cancellationToken)
         {
             var userId = currentUserService.GetCurrentUserId();
-            if (userId == null) return Result<IReadOnlyList<Address>>.Failure("Unauthorized.");
+            if (userId == null || userId == Guid.Empty)
+                return Result<IReadOnlyList<AddressDto>>.Failure("Unauthorized.");
 
-            var allAddresses = await unitOfWork.Repository<Address>().ListAllAsync();
+            var repo = unitOfWork.Repository<Address>();
 
-            var userAddresses = allAddresses
+            var addresses = await repo.Query()
                 .Where(a => a.UserId == userId.Value)
                 .OrderByDescending(a => a.IsDefault)
                 .ThenByDescending(a => a.CreatedAt)
-                .ToList();
+                .ToListAsync(cancellationToken);
 
-            return Result<IReadOnlyList<Address>>.Success(userAddresses);
+            var dto = addresses.Select(a => new AddressDto
+            {
+                Id = a.Id,
+                Country = a.Country,
+                Region = a.Region,
+                City = a.City,
+                SpecialPlaceName = a.SpecialPlaceName,
+                IsDefault = a.IsDefault
+            }).ToList();
+            return Result<IReadOnlyList<AddressDto>>.Success(dto);
         }
 
     }

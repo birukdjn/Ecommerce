@@ -29,7 +29,7 @@ namespace Application.Features.Products.Queries.GetMyProductDetail
             {
                 Id = product.Id,
                 Name = product.Name,
-                Description = product.Description,
+                Description = product.Description ?? string.Empty,
                 Price = product.Price,
                 StockQuantity = product.StockQuantity,
                 IsApproved = product.IsApproved,

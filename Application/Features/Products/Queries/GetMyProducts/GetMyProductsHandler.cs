@@ -24,7 +24,7 @@ namespace Application.Features.Products.Queries.GetMyProducts
             {
                 var search = request.Params.Search.ToLower();
                 query = query.Where(p => p.Name.ToLower().Contains(search)
-                                      || p.Description.ToLower().Contains(search));
+                                      || (p.Description != null && p.Description.ToLower().Contains(search)));
             }
 
             query = request.Params.Sort switch

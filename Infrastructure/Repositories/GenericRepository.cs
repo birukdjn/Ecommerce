@@ -2,7 +2,6 @@
 using Domain.Common.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Infrastructure.Context;
-using System.Linq.Expressions;
 
 namespace Infrastructure.Repositories
 {
@@ -24,13 +23,6 @@ namespace Infrastructure.Repositories
         public async Task<IReadOnlyList<T>> ListAllAsync()
         {
             return await _context.Set<T>().ToListAsync();
-        }
-
-        public async Task<T?> GetWithDeletedAsync(Expression<Func<T, bool>> predicate)
-        {
-            return await _context.Set<T>()
-                .IgnoreQueryFilters()
-                .FirstOrDefaultAsync(predicate);
         }
 
         public void Add(T entity) =>
