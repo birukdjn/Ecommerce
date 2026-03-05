@@ -9,7 +9,7 @@ namespace Application.Features.Categories.Queries.GetCategories
     public class GetCategoriesHandler(IApplicationDbContext context)
         : IRequestHandler<GetCategoriesQuery, Result<List<CategoryDto>>>
     {
-        public async Task<Result<List<CategoryDto>>> Handle(GetCategoriesQuery request, CancellationToken ct)
+        public async Task<Result<List<CategoryDto>>> Handle(GetCategoriesQuery request, CancellationToken cancellationToken)
         {
             var categories = await context.Categories
                 .Select(c => new CategoryDto
@@ -18,7 +18,7 @@ namespace Application.Features.Categories.Queries.GetCategories
                     Name = c.Name,
                     Description = c.Description
                 })
-                .ToListAsync(ct);
+                .ToListAsync(cancellationToken);
 
             return Result<List<CategoryDto>>.Success(categories);
         }
