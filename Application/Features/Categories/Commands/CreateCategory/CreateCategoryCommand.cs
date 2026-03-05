@@ -1,3 +1,4 @@
+using Application.DTOs.Category;
 using Domain.Common;
 using MediatR;
 
@@ -9,5 +10,5 @@ namespace Application.Features.Categories.Commands.CreateCategory
         string? Description,
         Guid? ParentCategoryId,
         decimal CommissionPercentage
-    ) : IRequest<Result<Guid>>;
+    ) : IRequest<Result<CategoryDto>>;
 }

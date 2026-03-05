@@ -1,4 +1,4 @@
-using Application.DTOs;
+using Application.DTOs.Category;
 using Domain.Common;
 using Domain.Common.Interfaces;
 using MediatR;

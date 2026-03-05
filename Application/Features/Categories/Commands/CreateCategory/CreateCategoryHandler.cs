@@ -1,45 +1,93 @@
+using Application.DTOs.Category;
 using Domain.Common;
 using Domain.Common.Interfaces;
 using Domain.Entities;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace Application.Features.Categories.Commands.CreateCategory
 {
     public class CreateCategoryHandler(IUnitOfWork unitOfWork)
-        : IRequestHandler<CreateCategoryCommand, Result<Guid>>
+        : IRequestHandler<CreateCategoryCommand, Result<CategoryDto>>
     {
-        public async Task<Result<Guid>> Handle(CreateCategoryCommand request, CancellationToken ct)
+        public async Task<Result<CategoryDto>> Handle(CreateCategoryCommand command, CancellationToken cancellationToken)
         {
-            var categoryRepo = unitOfWork.Repository<Category>();
+            var repo = unitOfWork.Repository<Category>();
 
-            if (request.CommissionPercentage < 0 || request.CommissionPercentage > 100)
-                return Result<Guid>.Failure("Commission percentage must be between 0 and 100.");
+            // Normalize input
+            var name = command.Name.Trim();
+            var parentCategoryId = command.ParentCategoryId;
+            var commissionPercentage = command.CommissionPercentage;
+            var description = command.Description?.Trim();
 
-            if (request.ParentCategoryId.HasValue)
+            // Check for existing category
+            var existingCategory = await repo.Query()
+                .IgnoreQueryFilters()
+                .FirstOrDefaultAsync(c =>
+                    c.Name.ToLower() == name.ToLower() &&
+                    c.ParentCategoryId == parentCategoryId &&
+                    c.CommissionPercentage == commissionPercentage,
+                    cancellationToken);
+
+            if (existingCategory != null)
             {
-                var parentCategory = await categoryRepo.GetByIdAsync(request.ParentCategoryId.Value);
+                if (!existingCategory.IsDeleted)
+                    return Result<CategoryDto>.Failure("Category already exists");
 
-                if (parentCategory == null)
-                    return Result<Guid>.Failure("Parent category not found.");
+                // Restore deleted category
+                existingCategory.IsDeleted = false;
+                existingCategory.Name = name;
+                existingCategory.Description = description;
+                existingCategory.CommissionPercentage = commissionPercentage;
+                repo.Update(existingCategory);
 
-                if (request.CommissionPercentage < parentCategory.CommissionPercentage)
-                    return Result<Guid>.Failure($"Category commission ({request.CommissionPercentage}%) cannot be lower than its parent '{parentCategory.Name}' ({parentCategory.CommissionPercentage}%).");
+                var restoredResult = await unitOfWork.Complete();
+                return restoredResult > 0
+                    ? Result<CategoryDto>.Success(new CategoryDto
+                    {
+                        Id = existingCategory.Id,
+                        Name = existingCategory.Name,
+                        Description = existingCategory.Description,
+
+                    })
+                    : Result<CategoryDto>.Failure("Failed to restore category");
             }
 
+            // Validation
+            if (commissionPercentage < 0 || commissionPercentage > 100)
+                return Result<CategoryDto>.Failure("Commission percentage must be between 0 and 100.");
+
+            if (parentCategoryId.HasValue)
+            {
+                var parentCategory = await repo.GetByIdAsync(parentCategoryId.Value);
+                if (parentCategory == null)
+                    return Result<CategoryDto>.Failure("Parent category not found.");
+
+                if (commissionPercentage < parentCategory.CommissionPercentage)
+                    return Result<CategoryDto>.Failure($"Category commission ({commissionPercentage}%) cannot be lower than its parent '{parentCategory.Name}' ({parentCategory.CommissionPercentage}%).");
+            }
+
+            // Create new category
             var category = new Category
             {
-                Name = request.Name,
-                Description = request.Description,
-                ParentCategoryId = request.ParentCategoryId,
-                CommissionPercentage = request.CommissionPercentage
+                Name = name,
+                Description = description,
+                ParentCategoryId = parentCategoryId,
+                CommissionPercentage = commissionPercentage
             };
 
-            categoryRepo.Add(category);
+            repo.Add(category);
             var result = await unitOfWork.Complete();
 
             return result > 0
-                ? Result<Guid>.Success(category.Id)
-                : Result<Guid>.Failure("Failed to create category.");
+                ? Result<CategoryDto>.Success(new CategoryDto
+                {
+                    Id = category.Id,
+                    Name = category.Name,
+                    Description = category.Description,
+
+                })
+                : Result<CategoryDto>.Failure("Failed to create category");
         }
     }
 }

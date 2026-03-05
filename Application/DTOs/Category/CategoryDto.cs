@@ -1,4 +1,4 @@
-namespace Application.DTOs
+namespace Application.DTOs.Category
 {
     public class CategoryDto
     {
