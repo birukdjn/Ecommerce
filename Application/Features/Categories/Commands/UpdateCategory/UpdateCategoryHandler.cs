@@ -2,34 +2,53 @@ using Domain.Common;
 using Domain.Common.Interfaces;
 using Domain.Entities;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 
 namespace Application.Features.Categories.Commands.UpdateCategory
 {
-    public class UpdateCategoryHandler(IUnitOfWork unitOfWork)
+    public class UpdateCategoryHandler(
+        IUnitOfWork unitOfWork,
+        ICurrentUserService currentUserService)
         : IRequestHandler<UpdateCategoryCommand, Result<bool>>
     {
-        public async Task<Result<bool>> Handle(UpdateCategoryCommand request, CancellationToken ct)
+        public async Task<Result<bool>> Handle(UpdateCategoryCommand command, CancellationToken cancellationToken)
         {
+            if (!currentUserService.IsAdmin())
+                return Result<bool>.Failure("Unauthorized");
+
             var repo = unitOfWork.Repository<Category>();
-            if (request.ParentCategoryId == request.Id)
+
+            if (command.ParentCategoryId == command.Id)
                 return Result<bool>.Failure("A category cannot be its own parent.");
 
-            var category = await repo.GetByIdAsync(request.Id);
+            var category = await repo.GetByIdAsync(command.Id);
+            if (category == null)
+                return Result<bool>.Failure("Category not found.");
 
-            if (category == null) return Result<bool>.Failure("Category not found.");
+            // Validate commission range
+            if (command.CommissionPercentage < 0 || command.CommissionPercentage > 100)
+                return Result<bool>.Failure("Commission percentage must be between 0 and 100.");
 
-            if (request.ParentCategoryId.HasValue)
+            // Circular reference protection
+            if (command.ParentCategoryId.HasValue)
             {
-                if (IsDescendant(category, request.ParentCategoryId.Value))
-                    return Result<bool>.Failure("Circular reference: Cannot move a category under one of its own children.");
+                var isCircular = await IsDescendantAsync(
+                    category.Id,
+                    command.ParentCategoryId,
+                    repo,
+                    cancellationToken);
+
+                if (isCircular)
+                    return Result<bool>.Failure("Circular reference detected.");
             }
 
-            category.Name = request.Name;
-            category.Description = request.Description;
-            category.ParentCategoryId = request.ParentCategoryId;
-            category.CommissionPercentage = request.CommissionPercentage;
+            category.Name = command.Name.Trim();
+            category.Description = command.Description?.Trim();
+            category.ParentCategoryId = command.ParentCategoryId;
+            category.CommissionPercentage = command.CommissionPercentage;
 
             repo.Update(category);
+
             var result = await unitOfWork.Complete();
 
             return result > 0
@@ -37,13 +56,26 @@ namespace Application.Features.Categories.Commands.UpdateCategory
                 : Result<bool>.Failure("No changes were applied.");
         }
 
-        private bool IsDescendant(Category current, Guid targetParentId)
+        private async Task<bool> IsDescendantAsync(
+            Guid categoryId,
+            Guid? potentialParentId,
+            IGenericRepository<Category> repo,
+            CancellationToken cancellationToken)
         {
-            foreach (var child in current.ChildCategories)
+            var currentParentId = potentialParentId;
+
+            while (currentParentId != null)
             {
-                if (child.Id == targetParentId) return true;
-                if (IsDescendant(child, targetParentId)) return true;
+                if (currentParentId == categoryId)
+                    return true;
+
+                var parent = await repo.GetByIdAsync(currentParentId.Value);
+                if (parent == null)
+                    break;
+
+                currentParentId = parent.ParentCategoryId;
             }
+
             return false;
         }
     }

@@ -10,14 +10,18 @@ namespace Application.Features.ProductImages.Commands.AddProductImage
     public class AddProductImageHandler(IUnitOfWork unitOfWork, ICurrentUserService currentUserService)
     : IRequestHandler<AddProductImageCommand, Result<Guid>>
     {
-        public async Task<Result<Guid>> Handle(AddProductImageCommand command, CancellationToken ct)
+        public async Task<Result<Guid>> Handle(AddProductImageCommand command, CancellationToken cancellationToken)
         {
             var vendorId = currentUserService.GetCurrentVendorId();
+            if (vendorId == null || vendorId == Guid.Empty)
+                return Result<Guid>.Failure("Unauthorized");
 
-            var product = await unitOfWork.Repository<Product>()
-                .Query()
+            var productRepo = unitOfWork.Repository<Product>();
+            var productImageRepo = unitOfWork.Repository<ProductImage>();
+
+            var product = await productRepo.Query()
                 .Include(p => p.Images)
-                .FirstOrDefaultAsync(p => p.Id == command.ProductId && p.VendorId == vendorId, ct);
+                .FirstOrDefaultAsync(p => p.Id == command.ProductId && p.VendorId == vendorId, cancellationToken);
 
             if (product == null)
                 return Result<Guid>.Failure("Product not found or you do not have permission.");
@@ -35,7 +39,7 @@ namespace Application.Features.ProductImages.Commands.AddProductImage
                 SortOrder = maxSortOrder + 1
             };
 
-            unitOfWork.Repository<ProductImage>().Add(image);
+            productImageRepo.Add(image);
             await unitOfWork.Complete();
 
             return Result<Guid>.Success(image.Id);

@@ -3,5 +3,9 @@ using MediatR;
 
 namespace Application.Features.ProductImages.Commands.AddProductImage
 {
-    public record AddProductImageCommand(Guid ProductId, string ImageUrl, string? AltText) : IRequest<Result<Guid>>;
+    public record AddProductImageCommand
+    (
+        Guid ProductId,
+        string ImageUrl,
+        string? AltText) : IRequest<Result<Guid>>;
 }

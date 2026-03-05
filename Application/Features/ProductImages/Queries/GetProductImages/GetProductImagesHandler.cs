@@ -10,7 +10,7 @@ namespace Application.Features.ProductImages.Queries.GetProductImages
     public class GetProductImagesHandler(IUnitOfWork unitOfWork)
         : IRequestHandler<GetProductImagesQuery, Result<List<ProductImageDto>>>
     {
-        public async Task<Result<List<ProductImageDto>>> Handle(GetProductImagesQuery request, CancellationToken ct)
+        public async Task<Result<List<ProductImageDto>>> Handle(GetProductImagesQuery request, CancellationToken cancellationToken)
         {
             var images = await unitOfWork.Repository<ProductImage>().Query()
                 .Where(i => i.ProductId == request.ProductId)
@@ -21,7 +21,7 @@ namespace Application.Features.ProductImages.Queries.GetProductImages
                     ImageUrl = i.ImageUrl,
                     IsPrimary = i.IsPrimary
                 })
-                .ToListAsync(ct);
+                .ToListAsync(cancellationToken);
 
             return Result<List<ProductImageDto>>.Success(images);
         }

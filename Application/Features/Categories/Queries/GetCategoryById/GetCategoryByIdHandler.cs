@@ -9,7 +9,7 @@ namespace Application.Features.Categories.Queries.GetCategoryById
     public class GetCategoryByIdHandler(IApplicationDbContext context)
         : IRequestHandler<GetCategoryByIdQuery, Result<CategoryDto>>
     {
-        public async Task<Result<CategoryDto>> Handle(GetCategoryByIdQuery request, CancellationToken ct)
+        public async Task<Result<CategoryDto>> Handle(GetCategoryByIdQuery request, CancellationToken cancellationToken)
         {
             var category = await context.Categories
                 .Where(c => c.Id == request.Id)
@@ -18,7 +18,7 @@ namespace Application.Features.Categories.Queries.GetCategoryById
                     Id = c.Id,
                     Name = c.Name,
                     Description = c.Description
-                }).FirstOrDefaultAsync(ct);
+                }).FirstOrDefaultAsync(cancellationToken);
 
 
             if (category == null)

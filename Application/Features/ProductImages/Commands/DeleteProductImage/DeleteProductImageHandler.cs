@@ -9,28 +9,32 @@ namespace Application.Features.ProductImages.Commands.DeleteProductImage
     public class DeleteProductImageHandler(IUnitOfWork unitOfWork, ICurrentUserService currentUserService)
         : IRequestHandler<DeleteProductImageCommand, Result<Unit>>
     {
-        public async Task<Result<Unit>> Handle(DeleteProductImageCommand request, CancellationToken ct)
+        public async Task<Result<Unit>> Handle(DeleteProductImageCommand command, CancellationToken cancellationToken)
         {
             var vendorId = currentUserService.GetCurrentVendorId();
+            if (vendorId == null || vendorId == Guid.Empty)
+                return Result<Unit>.Failure("Unauthorized");
 
-            var image = await unitOfWork.Repository<ProductImage>().Query()
+            var productImageRepo = unitOfWork.Repository<ProductImage>();
+
+            var image = await productImageRepo.Query()
                 .Include(i => i.Product)
-                .FirstOrDefaultAsync(i => i.Id == request.ImageId &&
-                                         i.ProductId == request.ProductId &&
-                                         i.Product.VendorId == vendorId, ct);
+                .FirstOrDefaultAsync(i => i.Id == command.ImageId &&
+                                         i.ProductId == command.ProductId &&
+                                         i.Product.VendorId == vendorId, cancellationToken);
 
             if (image == null) return Result<Unit>.Failure("Image not found.");
 
             bool wasPrimary = image.IsPrimary;
 
-            unitOfWork.Repository<ProductImage>().Delete(image);
+            productImageRepo.Delete(image);
 
             if (wasPrimary)
             {
-                var nextImage = await unitOfWork.Repository<ProductImage>().Query()
-                    .Where(i => i.ProductId == request.ProductId && !i.IsDeleted && i.Id != request.ImageId)
+                var nextImage = await productImageRepo.Query()
+                    .Where(i => i.ProductId == command.ProductId && !i.IsDeleted && i.Id != command.ImageId)
                     .OrderBy(i => i.SortOrder)
-                    .FirstOrDefaultAsync(ct);
+                    .FirstOrDefaultAsync(cancellationToken);
 
                 nextImage?.IsPrimary = true;
             }

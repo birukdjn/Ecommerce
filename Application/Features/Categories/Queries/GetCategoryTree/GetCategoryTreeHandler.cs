@@ -10,13 +10,13 @@ namespace Application.Features.Categories.Queries.GetCategoryTree
     public class GetCategoryTreeHandler(IUnitOfWork unitOfWork)
      : IRequestHandler<GetCategoryTreeQuery, Result<List<CategoryDto>>>
     {
-        public async Task<Result<List<CategoryDto>>> Handle(GetCategoryTreeQuery request, CancellationToken ct)
+        public async Task<Result<List<CategoryDto>>> Handle(GetCategoryTreeQuery request, CancellationToken cancellationToken)
         {
             var allCategories = await unitOfWork.Repository<Category>()
                 .Query()
                 .AsNoTracking()
                 .Include(x => x.ParentCategory)
-                .ToListAsync(ct);
+                .ToListAsync(cancellationToken);
 
             var lookup = allCategories.ToLookup(c => c.ParentCategoryId);
 

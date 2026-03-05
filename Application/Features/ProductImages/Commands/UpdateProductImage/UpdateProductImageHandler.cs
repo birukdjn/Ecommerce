@@ -9,15 +9,19 @@ namespace Application.Features.ProductImages.Commands.UpdateProductImage
     public class UpdateProductImageHandler(IUnitOfWork unitOfWork, ICurrentUserService currentUserService)
     : IRequestHandler<UpdateProductImageCommand, Result<Unit>>
     {
-        public async Task<Result<Unit>> Handle(UpdateProductImageCommand command, CancellationToken ct)
+        public async Task<Result<Unit>> Handle(UpdateProductImageCommand command, CancellationToken cancellationToken)
         {
             var vendorId = currentUserService.GetCurrentVendorId();
+            if (vendorId == null || vendorId == Guid.Empty)
+                return Result<Unit>.Failure("Unauthorized");
 
-            var image = await unitOfWork.Repository<ProductImage>().Query()
+            var productImageRepo = unitOfWork.Repository<ProductImage>();
+
+            var image = await productImageRepo.Query()
                 .Include(i => i.Product)
                 .FirstOrDefaultAsync(i => i.Id == command.ImageId &&
                                           i.Product.VendorId == vendorId &&
-                                          !i.IsDeleted, ct);
+                                          !i.IsDeleted, cancellationToken);
 
             if (image == null)
                 return Result<Unit>.Failure("Image not found or has been deleted.");
@@ -25,7 +29,7 @@ namespace Application.Features.ProductImages.Commands.UpdateProductImage
             image.ImageUrl = command.NewUrl;
             image.AltText = command.AltText;
 
-            unitOfWork.Repository<ProductImage>().Update(image);
+            productImageRepo.Update(image);
             await unitOfWork.Complete();
 
             return Result<Unit>.Success(Unit.Value);

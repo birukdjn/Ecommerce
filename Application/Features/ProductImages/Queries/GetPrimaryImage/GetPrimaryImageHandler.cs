@@ -10,7 +10,7 @@ namespace Application.Features.ProductImages.Queries.GetPrimaryImage
     public class GetPrimaryImageHandler(IUnitOfWork unitOfWork)
     : IRequestHandler<GetPrimaryImageQuery, Result<ProductImageDto>>
     {
-        public async Task<Result<ProductImageDto>> Handle(GetPrimaryImageQuery request, CancellationToken ct)
+        public async Task<Result<ProductImageDto>> Handle(GetPrimaryImageQuery request, CancellationToken cancellationToken)
         {
             var primaryImage = await unitOfWork.Repository<ProductImage>().Query()
                 .AsNoTracking()
@@ -23,7 +23,7 @@ namespace Application.Features.ProductImages.Queries.GetPrimaryImage
                     IsPrimary = true
 
                 })
-                .FirstOrDefaultAsync(ct);
+                .FirstOrDefaultAsync(cancellationToken);
 
             if (primaryImage == null)
                 return Result<ProductImageDto>.Failure("No primary image found for this product.");

@@ -9,32 +9,48 @@ namespace Application.Features.ProductImages.Commands.ReorderProductImage
     public class ReorderProductImagesHandler(IUnitOfWork unitOfWork, ICurrentUserService currentUserService)
     : IRequestHandler<ReorderProductImagesCommand, Result<Unit>>
     {
-        public async Task<Result<Unit>> Handle(ReorderProductImagesCommand request, CancellationToken ct)
+        public async Task<Result<Unit>> Handle(ReorderProductImagesCommand command, CancellationToken cancellationToken)
         {
             var vendorId = currentUserService.GetCurrentVendorId();
+            if (vendorId == null || vendorId == Guid.Empty)
+                return Result<Unit>.Failure("Unauthorized");
 
-            // Load product and images
-            var product = await unitOfWork.Repository<Product>()
-                .Query()
+            var productRepo = unitOfWork.Repository<Product>();
+
+            var product = await productRepo.Query()
                 .Include(p => p.Images)
-                .FirstOrDefaultAsync(p => p.Id == request.ProductId && p.VendorId == vendorId, ct);
+                .FirstOrDefaultAsync(
+                    p => p.Id == command.ProductId && p.VendorId == vendorId,
+                    cancellationToken);
 
             if (product == null)
                 return Result<Unit>.Failure("Product not found or you do not have permission.");
 
-            var images = product.Images.Where(i => !i.IsDeleted).ToList();
+            var images = product.Images
+                .Where(i => !i.IsDeleted)
+                .ToList();
 
             var imageIds = images.Select(i => i.Id).ToHashSet();
-            if (!request.OrderedIds.All(id => imageIds.Contains(id)))
+
+            // Validation
+            if (command.OrderedIds.Count != images.Count)
+                return Result<Unit>.Failure("All product images must be included in the reorder request.");
+
+            if (command.OrderedIds.Distinct().Count() != command.OrderedIds.Count)
+                return Result<Unit>.Failure("Duplicate image IDs detected.");
+
+            if (!command.OrderedIds.All(id => imageIds.Contains(id)))
                 return Result<Unit>.Failure("One or more images do not belong to this product.");
 
-            for (int i = 0; i < request.OrderedIds.Count; i++)
+            var imageDictionary = images.ToDictionary(i => i.Id);
+
+            for (int i = 0; i < command.OrderedIds.Count; i++)
             {
-                var image = images.First(x => x.Id == request.OrderedIds[i]);
-                image.SortOrder = i + 1;
+                imageDictionary[command.OrderedIds[i]].SortOrder = i + 1;
             }
 
             await unitOfWork.Complete();
+
             return Result<Unit>.Success(Unit.Value);
         }
     }

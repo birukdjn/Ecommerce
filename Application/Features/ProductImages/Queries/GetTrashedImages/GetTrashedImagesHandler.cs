@@ -10,11 +10,13 @@ namespace Application.Features.ProductImages.Queries.GetTrashedImages
     public class GetTrashedImagesHandler(IUnitOfWork unitOfWork, ICurrentUserService currentUserService)
     : IRequestHandler<GetTrashedImagesQuery, Result<List<ProductImageDto>>>
     {
-        public async Task<Result<List<ProductImageDto>>> Handle(GetTrashedImagesQuery request, CancellationToken ct)
+        public async Task<Result<List<ProductImageDto>>> Handle(GetTrashedImagesQuery request, CancellationToken cancellationToken)
         {
             var vendorId = currentUserService.GetCurrentVendorId();
+            if (vendorId == null || vendorId == Guid.Empty)
+                return Result<List<ProductImageDto>>.Failure("Unauthorized");
 
-            // Use IgnoreQueryFilters to see the 'IsDeleted = true' records
+
             var trashedImages = await unitOfWork.Repository<ProductImage>().Query()
                 .IgnoreQueryFilters()
                 .Include(i => i.Product)
@@ -28,7 +30,7 @@ namespace Application.Features.ProductImages.Queries.GetTrashedImages
                     AltText = i.AltText,
                     IsPrimary = i.IsPrimary
                 })
-                .ToListAsync(ct);
+                .ToListAsync(cancellationToken);
 
             return Result<List<ProductImageDto>>.Success(trashedImages);
         }
