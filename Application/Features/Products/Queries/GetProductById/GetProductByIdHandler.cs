@@ -10,14 +10,13 @@ namespace Application.Features.Products.Queries.GetProductById
     public class GetProductByIdHandler(IUnitOfWork unitOfWork)
         : IRequestHandler<GetProductByIdQuery, Result<ProductDto>>
     {
-        public async Task<Result<ProductDto>> Handle(GetProductByIdQuery request, CancellationToken ct)
+        public async Task<Result<ProductDto>> Handle(GetProductByIdQuery request, CancellationToken cancellationToken)
         {
-            var product = await unitOfWork.Repository<Product>()
-                .Query()
+            var product = await unitOfWork.Repository<Product>().Query()
                 .AsNoTracking()
                 .Include(p => p.Images)
                 .Include(p => p.Vendor)
-                .FirstOrDefaultAsync(x => x.Id == request.Id, ct);
+                .FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken);
 
             if (product == null)
                 return Result<ProductDto>.Failure("Product not found.");

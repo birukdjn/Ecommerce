@@ -11,7 +11,7 @@ namespace Application.Features.Products.Queries.GetProducts
     public class GetProductsHandler(IUnitOfWork unitOfWork)
         : IRequestHandler<GetProductsQuery, Result<PagedList<ProductDto>>>
     {
-        public async Task<Result<PagedList<ProductDto>>> Handle(GetProductsQuery request, CancellationToken ct)
+        public async Task<Result<PagedList<ProductDto>>> Handle(GetProductsQuery request, CancellationToken cancellationToken)
         {
             var query = unitOfWork.Repository<Product>().Query()
                 .AsNoTracking()
@@ -31,7 +31,7 @@ namespace Application.Features.Products.Queries.GetProducts
                 _ => query.OrderByDescending(p => p.CreatedAt)
             };
 
-            var totalItems = await query.CountAsync(ct);
+            var totalItems = await query.CountAsync(cancellationToken);
             var items = await query.Skip((request.Params.PageIndex - 1) * request.Params.PageSize)
                                    .Take(request.Params.PageSize)
                                    .Select(p => new ProductDto
@@ -44,7 +44,7 @@ namespace Application.Features.Products.Queries.GetProducts
                                                 : p.Images.FirstOrDefault() != null ? p.Images.FirstOrDefault()!.ImageUrl
                                                 : null
                                    })
-                                                    .ToListAsync(ct);
+                                                    .ToListAsync(cancellationToken);
 
             return Result<PagedList<ProductDto>>.Success(new PagedList<ProductDto>(items, totalItems));
         }
