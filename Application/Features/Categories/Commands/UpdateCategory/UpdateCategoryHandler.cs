@@ -2,7 +2,6 @@ using Domain.Common;
 using Domain.Common.Interfaces;
 using Domain.Entities;
 using MediatR;
-using Microsoft.EntityFrameworkCore;
 
 namespace Application.Features.Categories.Commands.UpdateCategory
 {
@@ -16,12 +15,12 @@ namespace Application.Features.Categories.Commands.UpdateCategory
             if (!currentUserService.IsAdmin())
                 return Result<bool>.Failure("Unauthorized");
 
-            var repo = unitOfWork.Repository<Category>();
+            var categoryrepo = unitOfWork.Repository<Category>();
 
             if (command.ParentCategoryId == command.Id)
                 return Result<bool>.Failure("A category cannot be its own parent.");
 
-            var category = await repo.GetByIdAsync(command.Id);
+            var category = await categoryrepo.GetByIdAsync(command.Id);
             if (category == null)
                 return Result<bool>.Failure("Category not found.");
 
@@ -35,7 +34,7 @@ namespace Application.Features.Categories.Commands.UpdateCategory
                 var isCircular = await IsDescendantAsync(
                     category.Id,
                     command.ParentCategoryId,
-                    repo,
+                    categoryrepo,
                     cancellationToken);
 
                 if (isCircular)
@@ -47,7 +46,7 @@ namespace Application.Features.Categories.Commands.UpdateCategory
             category.ParentCategoryId = command.ParentCategoryId;
             category.CommissionPercentage = command.CommissionPercentage;
 
-            repo.Update(category);
+            categoryrepo.Update(category);
 
             var result = await unitOfWork.Complete();
 
@@ -59,7 +58,7 @@ namespace Application.Features.Categories.Commands.UpdateCategory
         private async Task<bool> IsDescendantAsync(
             Guid categoryId,
             Guid? potentialParentId,
-            IGenericRepository<Category> repo,
+            IGenericRepository<Category> categoryRepo,
             CancellationToken cancellationToken)
         {
             var currentParentId = potentialParentId;
@@ -69,7 +68,7 @@ namespace Application.Features.Categories.Commands.UpdateCategory
                 if (currentParentId == categoryId)
                     return true;
 
-                var parent = await repo.GetByIdAsync(currentParentId.Value);
+                var parent = await categoryRepo.GetByIdAsync(currentParentId.Value);
                 if (parent == null)
                     break;
 
