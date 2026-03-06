@@ -1,7 +1,7 @@
 using Application.DTOs;
 using Application.Features.Admins.Commands.ApproveVendor;
 using Application.Features.Admins.Commands.RejectVendor;
-using Application.Features.Admins.Queries.GetVendorRequests;
+using Application.Features.Admins.Vendors.Queries.GetVendorRequests;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

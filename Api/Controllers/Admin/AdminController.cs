@@ -1,7 +1,7 @@
 using Application.Features.Admins.Commands.ToggleVendorStatus;
-using Application.Features.Admins.Queries.GetStats;
 using Application.Features.Admins.Queries.GetUsers;
-using Application.Features.Admins.Queries.GetVendors;
+using Application.Features.Admins.stats.GetStats;
+using Application.Features.Admins.Vendors.Queries.GetVendors;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
