@@ -14,7 +14,6 @@ namespace Application.Features.Products.Queries.GetMyProducts
         {
             var vendorId = currentUserService.GetCurrentVendorId();
 
-            // 1. Start with a clean query
             var query = unitOfWork.Repository<Product>().Query()
                 .AsNoTracking()
                 .Include(p => p.Images)
@@ -47,6 +46,7 @@ namespace Application.Features.Products.Queries.GetMyProducts
                     Id = p.Id,
                     Name = p.Name,
                     Price = p.Price,
+                    Description = p.Description ?? string.Empty,
                     StockQuantity = p.StockQuantity,
                     ImageUrl = p.Images.FirstOrDefault(i => i.IsPrimary) != null
                                ? p.Images.FirstOrDefault(i => i.IsPrimary)!.ImageUrl
