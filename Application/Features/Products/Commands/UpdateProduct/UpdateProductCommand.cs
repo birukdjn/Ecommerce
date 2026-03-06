@@ -11,5 +11,4 @@ public record UpdateProductCommand : IRequest<Result<bool>>
     public decimal Price { get; init; }
     public int StockQuantity { get; init; }
     public List<Guid> CategoryIds { get; init; } = [];
-    public List<string> ImageUrls { get; init; } = [];
 }
