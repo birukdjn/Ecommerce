@@ -4,7 +4,7 @@ using Domain.Entities;
 using MediatR;
 using Domain.Enums;
 
-namespace Application.Features.Admins.Commands.ToggleVendorStatus
+namespace Application.Features.Admins.Vendors.Commands.ToggleVendorStatus
 {
 
     public class ToggleVendorStatusHandler(IUnitOfWork unitOfWork)

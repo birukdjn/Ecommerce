@@ -5,7 +5,7 @@ using Domain.Entities;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
-namespace Application.Features.Admins.Vendors.Queries.GetVendorRequests
+namespace Application.Features.Admins.Vendors.Queries.GetVendorRequestById
 {
     public class GetVendorRequestByIdQueryHandler(
         IUnitOfWork unitOfWork,

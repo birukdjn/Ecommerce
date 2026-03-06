@@ -3,7 +3,7 @@ using Domain.Common;
 using Domain.Common.Interfaces;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-namespace Application.Features.Admins.Queries.GetUsers
+namespace Application.Features.Admins.stats.GetUsers
 {
     public class GetAllUsersHandler(IApplicationDbContext context)
         : IRequestHandler<GetAllUsersQuery, Result<List<UserSummaryDto>>>

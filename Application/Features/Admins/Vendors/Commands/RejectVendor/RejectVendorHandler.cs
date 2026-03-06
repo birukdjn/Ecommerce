@@ -5,7 +5,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 
-namespace Application.Features.Admins.Commands.RejectVendor
+namespace Application.Features.Admins.Vendors.Commands.RejectVendor
 {
     public class RejectVendorHandler(IApplicationDbContext context)
         : IRequestHandler<RejectVendorCommand, Result<bool>>

@@ -2,7 +2,6 @@ using Application.DTOs;
 using Domain.Common;
 using Domain.Common.Interfaces;
 using Domain.Entities;
-using Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 namespace Application.Features.Admins.Vendors.Queries.GetVendors

@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 
-namespace Application.Features.Admins.Commands.ApproveVendor
+namespace Application.Features.Admins.Vendors.Commands.ApproveVendor
 {
     public class ApproveVendorHandler(
         IApplicationDbContext context,
