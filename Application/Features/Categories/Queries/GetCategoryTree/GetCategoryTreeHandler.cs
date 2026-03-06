@@ -12,7 +12,8 @@ namespace Application.Features.Categories.Queries.GetCategoryTree
     {
         public async Task<Result<List<CategoryDto>>> Handle(GetCategoryTreeQuery request, CancellationToken cancellationToken)
         {
-            var allCategories = await unitOfWork.Repository<Category>()
+            var categoryRepo = unitOfWork.Repository<Category>();
+            var allCategories = await categoryRepo
                 .Query()
                 .AsNoTracking()
                 .Include(x => x.ParentCategory)
@@ -22,13 +23,13 @@ namespace Application.Features.Categories.Queries.GetCategoryTree
 
             List<CategoryDto> BuildTree(Guid? parentId)
             {
-                return lookup[parentId]
+                return [.. lookup[parentId]
                     .Select(c => new CategoryDto
                     {
                         Id = c.Id,
                         Name = c.Name,
                         Children = BuildTree(c.Id)
-                    }).ToList();
+                    })];
             }
 
             var tree = BuildTree(null);

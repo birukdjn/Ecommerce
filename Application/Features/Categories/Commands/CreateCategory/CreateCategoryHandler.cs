@@ -7,12 +7,16 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Application.Features.Categories.Commands.CreateCategory
 {
-    public class CreateCategoryHandler(IUnitOfWork unitOfWork)
-        : IRequestHandler<CreateCategoryCommand, Result<CategoryDto>>
+    public class CreateCategoryHandler(
+        IUnitOfWork unitOfWork,
+        ICurrentUserService currentUserService) : IRequestHandler<CreateCategoryCommand, Result<CategoryDto>>
     {
         public async Task<Result<CategoryDto>> Handle(CreateCategoryCommand command, CancellationToken cancellationToken)
         {
-            var repo = unitOfWork.Repository<Category>();
+            if (currentUserService.IsAdmin())
+                return Result<CategoryDto>.Failure("Unauthorized");
+
+            var categoryRepo = unitOfWork.Repository<Category>();
 
             // Normalize input
             var name = command.Name.Trim();
@@ -21,7 +25,7 @@ namespace Application.Features.Categories.Commands.CreateCategory
             var description = command.Description?.Trim();
 
             // Check for existing category
-            var existingCategory = await repo.Query()
+            var existingCategory = await categoryRepo.Query()
                 .IgnoreQueryFilters()
                 .FirstOrDefaultAsync(c =>
                     c.Name.ToLower() == name.ToLower() &&
@@ -39,7 +43,8 @@ namespace Application.Features.Categories.Commands.CreateCategory
                 existingCategory.Name = name;
                 existingCategory.Description = description;
                 existingCategory.CommissionPercentage = commissionPercentage;
-                repo.Update(existingCategory);
+
+                categoryRepo.Update(existingCategory);
 
                 var restoredResult = await unitOfWork.Complete();
                 return restoredResult > 0
@@ -59,7 +64,7 @@ namespace Application.Features.Categories.Commands.CreateCategory
 
             if (parentCategoryId.HasValue)
             {
-                var parentCategory = await repo.GetByIdAsync(parentCategoryId.Value);
+                var parentCategory = await categoryRepo.GetByIdAsync(parentCategoryId.Value);
                 if (parentCategory == null)
                     return Result<CategoryDto>.Failure("Parent category not found.");
 
@@ -76,7 +81,7 @@ namespace Application.Features.Categories.Commands.CreateCategory
                 CommissionPercentage = commissionPercentage
             };
 
-            repo.Add(category);
+            categoryRepo.Add(category);
             var result = await unitOfWork.Complete();
 
             return result > 0
