@@ -18,6 +18,16 @@ namespace Api.Controllers
             [FromQuery] AdminProductSpecParams specParams)
             => HandleResult(await mediator.Send(new GetAdminProductsQuery(specParams)));
 
+        [HttpGet("pending")]
+        public async Task<ActionResult<PagedList<AdminProductDto>>> GetPending(
+            [FromQuery] AdminProductSpecParams specParams)
+        {
+            specParams.IsApproved = false;
+            specParams.IsDeleted = false;
+
+            return HandleResult(await mediator.Send(new GetAdminProductsQuery(specParams)));
+        }
+
         [HttpPatch("{id:guid}/approve")]
         public async Task<ActionResult> ApproveProduct(Guid id)
             => HandleResult(await mediator.Send(new ApproveProductCommand(id)));
