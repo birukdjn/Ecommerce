@@ -25,7 +25,7 @@ namespace Application.Features.Products.Commands.CreateProduct
             var productImageRepo = unitOfWork.Repository<ProductImage>();
             var vendor = await vendorRepo.GetByIdAsync(vendorId.Value);
 
-            if (vendor == null || vendor.Status != VendorStatus.Approved)
+            if (vendor == null || vendor.Status != VendorStatus.Active)
                 return Result<Guid>.Failure("Only approved vendors can create products.");
 
             var name = command.Name.Trim();
