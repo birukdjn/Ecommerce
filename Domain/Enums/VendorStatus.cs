@@ -7,8 +7,6 @@ namespace Domain.Enums
         Pending,
         InReview,
         Rejected,
-        Approved,
-
         Active,
         Suspended,
 
