@@ -2,7 +2,7 @@
 using Domain.Common;
 using MediatR;
 
-namespace Application.Features.Admins.Queries.GetVendorRequests
+namespace Application.Features.Admins.Vendors.Queries.GetVendorRequests
 {
     public record GetVendorRequestsQuery : IRequest<Result<List<VendorRequestDetailsDto>>>;
 }

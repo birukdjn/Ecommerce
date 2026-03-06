@@ -11,6 +11,7 @@ namespace Application.Features.Admins.Queries.GetUsers
         public async Task<Result<List<UserSummaryDto>>> Handle(GetAllUsersQuery request, CancellationToken ct)
         {
             var users = await context.Users
+                .AsNoTracking()
                 .Select(u => new UserSummaryDto(
                     u.Id,
                     u.FullName ?? "N/A",

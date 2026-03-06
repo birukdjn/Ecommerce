@@ -1,17 +1,26 @@
 ﻿using Application.DTOs;
 using Domain.Common;
 using Domain.Common.Interfaces;
+using Domain.Entities;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
-namespace Application.Features.Admins.Queries.GetVendorRequests
+namespace Application.Features.Admins.Vendors.Queries.GetVendorRequests
 {
-    public class GetVendorRequestsHandler(IApplicationDbContext context)
+    public class GetVendorRequestsHandler(
+        IUnitOfWork unitOfWork,
+        ICurrentUserService currentUserService)
         : IRequestHandler<GetVendorRequestsQuery, Result<List<VendorRequestDetailsDto>>>
     {
         public async Task<Result<List<VendorRequestDetailsDto>>> Handle(GetVendorRequestsQuery request, CancellationToken ct)
         {
-            var requests = await context.Vendors
+            if (!currentUserService.IsAdmin())
+                return Result<List<VendorRequestDetailsDto>>.Failure("Unauthorized");
+
+            var vendorRepo = unitOfWork.Repository<Vendor>();
+
+            var requests = await vendorRepo.Query()
+            .AsNoTracking()
             .IgnoreQueryFilters()
             .Include(v => v.User)
             .OrderByDescending(v => v.CreatedAt)

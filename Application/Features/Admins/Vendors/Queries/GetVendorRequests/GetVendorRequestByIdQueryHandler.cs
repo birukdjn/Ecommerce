@@ -1,20 +1,28 @@
 ﻿using Application.DTOs;
 using Domain.Common;
 using Domain.Common.Interfaces;
+using Domain.Entities;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
-namespace Application.Features.Admins.Queries.GetVendorRequests
+namespace Application.Features.Admins.Vendors.Queries.GetVendorRequests
 {
-    public class GetVendorRequestByIdQueryHandler(IApplicationDbContext context)
+    public class GetVendorRequestByIdQueryHandler(
+        IUnitOfWork unitOfWork,
+        ICurrentUserService currentUserService)
             : IRequestHandler<GetVendorRequestByIdQuery, Result<VendorRequestDetailsDto>>
     {
-        public async Task<Result<VendorRequestDetailsDto>> Handle(GetVendorRequestByIdQuery request, CancellationToken ct)
+        public async Task<Result<VendorRequestDetailsDto>> Handle(GetVendorRequestByIdQuery request, CancellationToken cancellationToken)
         {
-            var vendor = await context.Vendors
+            if (!currentUserService.IsAdmin())
+                return Result<VendorRequestDetailsDto>.Failure("Unauthorized");
+            var vendorRepo = unitOfWork.Repository<Vendor>();
+
+            var vendor = await vendorRepo.Query()
+                .AsNoTracking()
                 .IgnoreQueryFilters()
                 .Include(v => v.User)
-                .FirstOrDefaultAsync(v => v.Id == request.Id, ct);
+                .FirstOrDefaultAsync(v => v.Id == request.Id, cancellationToken);
 
             if (vendor == null) return Result<VendorRequestDetailsDto>.Failure("Request not found");
 
@@ -24,7 +32,7 @@ namespace Application.Features.Admins.Queries.GetVendorRequests
                 vendor.Description,
                 vendor.LicenseUrl,
                 vendor.LogoUrl,
-                vendor.RejectionReason, 
+                vendor.RejectionReason,
                 vendor.User.FullName ?? "Unknown",
                 vendor.User.Email ?? "Unknown",
                 vendor.Status.ToString(),
