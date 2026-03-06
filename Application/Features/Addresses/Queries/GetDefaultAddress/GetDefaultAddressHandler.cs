@@ -19,6 +19,7 @@ namespace Application.Features.Addresses.Queries.GetDefaultAddress
             var repo = unitOfWork.Repository<Address>();
 
             var address = await repo.Query()
+                .AsNoTracking()
                 .Where(a => a.UserId == userId && a.IsDefault)
                 .Select(a => new AddressDto
                 {

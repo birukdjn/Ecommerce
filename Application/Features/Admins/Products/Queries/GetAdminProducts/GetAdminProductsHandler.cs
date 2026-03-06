@@ -7,11 +7,16 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Application.Features.Admins.Products.Queries.GetAdminProducts
 {
-    public class GetAdminProductsHandler(IUnitOfWork unitOfWork)
+    public class GetAdminProductsHandler(
+        IUnitOfWork unitOfWork,
+        ICurrentUserService currentUserService)
         : IRequestHandler<GetAdminProductsQuery, Result<PagedList<AdminProductDto>>>
     {
         public async Task<Result<PagedList<AdminProductDto>>> Handle(GetAdminProductsQuery request, CancellationToken cancellationToken)
         {
+            if (!currentUserService.IsAdmin())
+                return Result<PagedList<AdminProductDto>>.Failure("Unauthorized");
+                
             var query = unitOfWork.Repository<Product>().Query()
                 .IgnoreQueryFilters()
                 .Include(p => p.Vendor)

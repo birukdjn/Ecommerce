@@ -19,6 +19,7 @@ namespace Application.Features.Addresses.Queries.GetAddresses
             var repo = unitOfWork.Repository<Address>();
 
             var addresses = await repo.Query()
+                .AsNoTracking()
                 .Where(a => a.UserId == userId.Value)
                 .OrderByDescending(a => a.IsDefault)
                 .ThenByDescending(a => a.CreatedAt)

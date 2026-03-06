@@ -14,12 +14,15 @@ namespace Application.Features.Admins.Products.Commands.RejectProduct
             if (!currentUserService.IsAdmin())
                 return Result<Unit>.Failure("Unauthorized");
 
-            var product = await unitOfWork.Repository<Product>().GetByIdAsync(command.ProductId);
+            var productRepo = unitOfWork.Repository<Product>();
+
+            var product = await productRepo.GetByIdAsync(command.ProductId);
             if (product == null) return Result<Unit>.Failure("Product not found");
 
             product.IsApproved = false;
             product.RejectionReason = command.Reason;
 
+            productRepo.Update(product);
             await unitOfWork.Complete();
             return Result<Unit>.Success(Unit.Value);
         }

@@ -18,7 +18,9 @@ namespace Application.Features.Addresses.Queries.GetAddressById
 
             var repo = unitOfWork.Repository<Address>();
 
-            var address = await repo.Query().FirstOrDefaultAsync(a => a.Id == request.Id && a.UserId == userId, cancellationToken);
+            var address = await repo.Query()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(a => a.Id == request.Id && a.UserId == userId, cancellationToken);
 
             if (address == null)
                 return Result<AddressDto>.Failure("Address not found.");
