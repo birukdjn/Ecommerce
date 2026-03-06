@@ -10,8 +10,10 @@ namespace Application.Features.Products.Queries.GetMyProducts
     public class GetMyProductsHandler(IUnitOfWork unitOfWork, ICurrentUserService currentUserService)
   : IRequestHandler<GetMyProductsQuery, Result<PagedList<MyProductSummaryDto>>>
     {
-        public async Task<Result<PagedList<MyProductSummaryDto>>> Handle(GetMyProductsQuery request, CancellationToken ct)
+        public async Task<Result<PagedList<MyProductSummaryDto>>> Handle(GetMyProductsQuery request, CancellationToken cancellationToken)
         {
+            if (!currentUserService.IsVendor())
+                return Result<PagedList<MyProductSummaryDto>>.Failure("Unauthorized");
             var vendorId = currentUserService.GetCurrentVendorId();
 
             var query = unitOfWork.Repository<Product>().Query()
@@ -33,7 +35,7 @@ namespace Application.Features.Products.Queries.GetMyProducts
                 _ => query.OrderByDescending(p => p.CreatedAt)
             };
 
-            var totalItems = await query.CountAsync(ct);
+            var totalItems = await query.CountAsync(cancellationToken);
 
             var pageSize = request.Params.PageSize > 0 ? request.Params.PageSize : 10;
             var pageIndex = request.Params.PageIndex > 0 ? request.Params.PageIndex : 1;
@@ -52,7 +54,7 @@ namespace Application.Features.Products.Queries.GetMyProducts
                                ? p.Images.FirstOrDefault(i => i.IsPrimary)!.ImageUrl
                                : null
                 })
-                .ToListAsync(ct);
+                .ToListAsync(cancellationToken);
 
             return Result<PagedList<MyProductSummaryDto>>.Success(new PagedList<MyProductSummaryDto>(items, totalItems));
         }
