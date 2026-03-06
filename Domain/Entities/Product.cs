@@ -3,7 +3,7 @@ using Domain.Common;
 
 namespace Domain.Entities
 {
-    public class Product:BaseEntity
+    public class Product : BaseEntity
     {
         public required string Name { get; set; }
         public string? Description { get; set; }
@@ -12,7 +12,8 @@ namespace Domain.Entities
         public Guid VendorId { get; set; }
         public virtual Vendor Vendor { get; set; } = null!;
         public bool IsApproved { get; set; } = false;
-  
+        public string? RejectionReason { get; set; }
+
         public virtual ICollection<ProductImage> Images { get; set; } = [];
         public virtual ICollection<OrderItem> OrderItems { get; set; } = [];
         public virtual ICollection<Review> Reviews { get; set; } = [];
