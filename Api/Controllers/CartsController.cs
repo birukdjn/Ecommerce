@@ -2,15 +2,18 @@ using Application.DTOs.Cart;
 using Application.Features.Carts.Commands.AddToCart;
 using Application.Features.Carts.Commands.ClearCart;
 using Application.Features.Carts.Commands.RemoveFromCart;
+using Application.Features.Carts.Commands.ToggleCartItemSelection;
 using Application.Features.Carts.Commands.UpdateCartItem;
+using Application.Features.Carts.Commands.ValidateCart;
 using Application.Features.Carts.Queries.GetCart;
+using Application.Features.Carts.Queries.GetCartCount;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Api.Controllers
 {
-    [Authorize] // Requires a valid JWT token
+    [Authorize]
     [Route("api/cart")]
     public class CartsController(ISender mediator) : ApiControllerBase
     {
@@ -33,5 +36,17 @@ namespace Api.Controllers
         [HttpDelete("clear")]
         public async Task<ActionResult> ClearCart()
             => HandleResult(await mediator.Send(new ClearCartCommand()));
+
+        [HttpGet("count")]
+        public async Task<ActionResult<int>> GetCount()
+            => HandleResult(await mediator.Send(new GetCartCountQuery()));
+
+        [HttpPost("validate")]
+        public async Task<ActionResult<CartValidationDto>> Validate()
+            => HandleResult(await mediator.Send(new ValidateCartCommand()));
+
+        [HttpPatch("items/{id}/select")]
+        public async Task<ActionResult> ToggleSelect(Guid id, [FromBody] bool isSelected)
+            => HandleResult(await mediator.Send(new ToggleSelectionCommand(id, isSelected)));
     }
 }
