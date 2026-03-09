@@ -4,6 +4,7 @@ using Domain.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using System.Linq.Expressions;
 
@@ -41,20 +42,23 @@ namespace Infrastructure.Context
         {
             foreach (var entry in ChangeTracker.Entries<BaseEntity>())
             {
-                switch (entry.State)
+                if (entry.State == EntityState.Added)
                 {
-                    case EntityState.Added:
-                        entry.Entity.CreatedAt = DateTime.UtcNow;
-                        break;
-                    case EntityState.Modified:
-                        entry.Entity.LastModifiedAt = DateTime.UtcNow;
-                        break;
-                    case EntityState.Deleted:
-                        entry.State = EntityState.Modified;
-                        entry.Entity.IsDeleted = true;
-                        entry.Entity.LastModifiedAt = DateTime.UtcNow;
-                        break;
+                    entry.Entity.CreatedAt = DateTime.UtcNow;
                 }
+                else if (entry.State == EntityState.Modified)
+                {
+                    entry.Entity.LastModifiedAt = DateTime.UtcNow;
+                }
+
+                if (entry.State == EntityState.Deleted && entry.Entity is AuditableEntity auditable)
+                {
+                    entry.State = EntityState.Modified;
+                    auditable.IsDeleted = true;
+                    auditable.DeletedAt = DateTime.UtcNow;
+                    auditable.LastModifiedAt = DateTime.UtcNow;
+                }
+
             }
             return base.SaveChangesAsync(cancellationToken);
         }
@@ -74,33 +78,26 @@ namespace Infrastructure.Context
 
             foreach (var entityType in builder.Model.GetEntityTypes())
             {
-                if (typeof(BaseEntity).IsAssignableFrom(entityType.ClrType))
+                if (typeof(VersionedEntity).IsAssignableFrom(entityType.ClrType))
                 {
                     builder.Entity(entityType.ClrType)
-                        .Property(nameof(BaseEntity.RowVersion))
+                        .Property(nameof(VersionedEntity.RowVersion))
                         .HasColumnName("xmin")
                         .HasColumnType("xid")
                         .ValueGeneratedOnAddOrUpdate()
                         .IsConcurrencyToken();
 
-                    builder.Entity(entityType.ClrType).HasQueryFilter(ConvertFilterExpression(entityType.ClrType));
 
+                }
+                if (typeof(AuditableEntity).IsAssignableFrom(entityType.ClrType))
+                {
+                    builder.Entity(entityType.ClrType).HasQueryFilter(ConvertFilterExpression(entityType.ClrType));
                 }
             }
 
             // LOGICAL MULTI-TENANCY FILTERS
 
             builder.Entity<Product>().HasQueryFilter(p =>
-                _currentUserService.IsAdmin() || (
-                    !p.IsDeleted && (
-                        _currentUserService.GetCurrentVendorId() == null ||
-                        p.VendorId == _currentUserService.GetCurrentVendorId()
-                    )
-                )
-            );
-
-
-            builder.Entity<SubOrder>().HasQueryFilter(p =>
                 _currentUserService.IsAdmin() || (
                     !p.IsDeleted && (
                         _currentUserService.GetCurrentVendorId() == null ||
@@ -115,7 +112,7 @@ namespace Infrastructure.Context
         private static LambdaExpression ConvertFilterExpression(Type type)
         {
             var parameter = Expression.Parameter(type, "it");
-            var isDeletedProp = Expression.Property(parameter, nameof(BaseEntity.IsDeleted));
+            var isDeletedProp = Expression.Property(parameter, nameof(AuditableEntity.IsDeleted));
             var isFalse = Expression.Constant(false);
             var condition = Expression.Equal(isDeletedProp, isFalse);
             return Expression.Lambda(condition, parameter);

@@ -3,7 +3,7 @@ using Domain.Enums;
 
 namespace Domain.Entities
 {
-    public class SubOrder:BaseEntity
+    public class SubOrder:TransactionEntity
     {
         public Guid OrderId { get; set; }
         public virtual Order MasterOrder { get; set; } = null!;

@@ -17,9 +17,7 @@ namespace Infrastructure.Identity
 
         private static async Task SeedRolesAsync(IServiceProvider serviceProvider)
         {
-            var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>();
-            if (roleManager == null) throw new Exception("RoleManager not registered in DI");
-
+            var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole<Guid>>>() ?? throw new Exception("RoleManager not registered in DI");
             string[] roles = { Roles.Admin, Roles.Vendor, Roles.Customer };
 
             foreach (var role in roles)
@@ -38,8 +36,8 @@ namespace Infrastructure.Identity
             {
                 new { Email = "admin@gmail.com", Password = "Admin123!", FullName="Admin Admin", Phone="0777888325", Role=Roles.Admin, IsVendor=false, StoreName=(string?)null },
                 new { Email = "user@gmail.com", Password = "User123!", FullName="User User", Phone="0908574808", Role=Roles.Customer, IsVendor=false, StoreName=(string?)null },
-                new { Email = "vendor@gmail.com", Password = "Vendor123!", FullName="Vendor Vendor", Phone="0912345678", Role=Roles.Vendor, IsVendor=true, StoreName="Vendor Store" },
-                new { Email = "vendor2@gmail.com", Password = "Vendor2123!", FullName="Vendor2 Vendor2", Phone="0987654321", Role=Roles.Vendor, IsVendor=true, StoreName="Vendor2 Store" }
+                new { Email = "vendor@gmail.com", Password = "Vendor123!", FullName="Vendor Vendor", Phone="0912345678", Role=Roles.Vendor, IsVendor=true, StoreName=(string?)"Vendor Store" },
+                new { Email = "vendor2@gmail.com", Password = "Vendor2123!", FullName="Vendor2 Vendor2", Phone="0987654321", Role=Roles.Vendor, IsVendor=true, StoreName=(string?)"Vendor2 Store" }
             };
 
             foreach (var userInfo in usersToSeed)

@@ -4,7 +4,7 @@ using Domain.Enums;
 
 namespace Domain.Entities
 {
-    public class Vendor:BaseEntity
+    public class Vendor:VersionedEntity
     {
         public required string StoreName { get; set; }
         public string? Description { get; set; }

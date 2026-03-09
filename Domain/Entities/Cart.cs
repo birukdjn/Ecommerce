@@ -2,7 +2,7 @@
 
 namespace Domain.Entities
 {
-    public class Cart:BaseEntity
+    public class Cart:AuditableEntity
     {
         public Guid UserId { get; set; }
         public virtual ApplicationUser User { get; set; } = null!;

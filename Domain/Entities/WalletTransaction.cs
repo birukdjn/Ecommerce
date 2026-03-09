@@ -3,7 +3,7 @@ using Domain.Enums;
 
 namespace Domain.Entities
 {
-    public class WalletTransaction : BaseEntity
+    public class WalletTransaction : TransactionEntity
     {
         public Guid WalletId { get; set; }
         public decimal Amount { get; set; }

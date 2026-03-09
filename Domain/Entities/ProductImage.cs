@@ -3,7 +3,7 @@ using Domain.Common;
 
 namespace Domain.Entities
 {
-    public class ProductImage : BaseEntity
+    public class ProductImage : AuditableEntity
     {
         public Guid ProductId { get; set; }
         public virtual Product Product { get; set; } = null!;

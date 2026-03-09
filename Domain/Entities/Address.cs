@@ -2,7 +2,7 @@
 
 namespace Domain.Entities
 {
-    public class Address:BaseEntity
+    public class Address : AuditableEntity
     {
         public Guid UserId { get; set; }
         public virtual ApplicationUser User { get; set; } = null!;

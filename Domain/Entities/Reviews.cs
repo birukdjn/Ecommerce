@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Domain.Entities
 {
-    public class Review:BaseEntity
+    public class Review : AuditableEntity
     {
         public Guid ProductId { get; set; }
         public virtual Product Product { get; set; } = null!;

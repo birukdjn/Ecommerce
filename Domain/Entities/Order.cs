@@ -3,7 +3,7 @@ using Domain.Enums;
 
 namespace Domain.Entities
 {
-    public class Order:BaseEntity
+    public class Order:TransactionEntity
     {
         public Guid CustomerId { get; set; }
         public virtual ApplicationUser Customer { get; set; } = null!;

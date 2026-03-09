@@ -3,7 +3,7 @@ using Domain.Common;
 
 namespace Domain.Entities
 {
-    public class OrderItem:BaseEntity
+    public class OrderItem : TransactionEntity
     {
         public Guid SubOrderId { get; set; }
         public virtual SubOrder SubOrder { get; set; } = null!;

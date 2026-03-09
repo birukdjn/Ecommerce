@@ -3,7 +3,7 @@ using Domain.Common;
 
 namespace Domain.Entities
 {
-    public class VendorWallet:BaseEntity
+    public class VendorWallet : VersionedEntity
     {
         public Guid VendorId { get; set; }
         public virtual Vendor Vendor { get; set; } = null!;

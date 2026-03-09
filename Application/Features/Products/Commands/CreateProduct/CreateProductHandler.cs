@@ -103,7 +103,11 @@ namespace Application.Features.Products.Commands.CreateProduct
 
                 var root = category;
                 while (root.ParentCategoryId.HasValue)
-                    root = await unitOfWork.Repository<Category>().GetByIdAsync(root.ParentCategoryId.Value);
+                {
+                    var parent = await unitOfWork.Repository<Category>().GetByIdAsync(root.ParentCategoryId.Value);
+                    if (parent == null) break;
+                    root = parent;
+                }
 
                 rootCategoryIds.Add(root.Id);
                 if (rootCategoryIds.Count > 1)
