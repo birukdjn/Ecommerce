@@ -92,7 +92,10 @@ namespace Infrastructure.Context
                 if (typeof(AuditableEntity).IsAssignableFrom(entityType.ClrType))
                 {
                     builder.Entity(entityType.ClrType).HasQueryFilter(ConvertFilterExpression(entityType.ClrType));
+                    
                 }
+
+               
             }
 
             // LOGICAL MULTI-TENANCY FILTERS
