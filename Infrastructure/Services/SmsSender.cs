@@ -10,7 +10,7 @@ namespace Infrastructure.Services
     {
         private readonly AfroSmsOptions _settings = options.Value;
 
-        public static string NormalizePhone(string phone)
+        public static string NormalizedPhone(string phone)
         {
             if (phone.StartsWith("0"))
                 return "+251" + phone.Substring(1);
@@ -23,7 +23,7 @@ namespace Infrastructure.Services
 
         public async Task<bool> SendSmsAsync(string to, string message)
         {
-            to = NormalizePhone(to);
+            to = NormalizedPhone(to);
             var client = httpClientFactory.CreateClient("AfroSms");
             client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _settings.Token);
 
@@ -37,11 +37,10 @@ namespace Infrastructure.Services
         {
 
 
-            to = NormalizePhone(to);
+            to = NormalizedPhone(to);
             var client = httpClientFactory.CreateClient("AfroSms");
             client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _settings.Token);
 
-            // ttl=300 (5 minutes), len=4 (code length)
             var url = $"api/challenge?from={_settings.IdentifierId}&sender={_settings.SenderName}&to={to}&pr={Uri.EscapeDataString(prefix)}&ttl=300&len=6&t=0";
             try
             {
@@ -68,7 +67,7 @@ namespace Infrastructure.Services
 
         public async Task<Result> VerifyCodeAsync(string to, string code, string verificationId)
         {
-            to = NormalizePhone(to);
+            to = NormalizedPhone(to);
             var client = httpClientFactory.CreateClient("AfroSms");
             client.DefaultRequestHeaders.Authorization =
                 new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _settings.Token);
@@ -85,7 +84,6 @@ namespace Infrastructure.Services
                 ? Result.Success()
                 : Result.Failure("Invalid or expired code.");
         }
-
 
     }
 }

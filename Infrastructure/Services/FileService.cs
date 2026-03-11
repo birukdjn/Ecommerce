@@ -13,13 +13,11 @@ namespace Infrastructure.Services
         {
             if (file == null || file.Length == 0) return string.Empty;
 
-            // Create the absolute path to the folder
             var uploadsFolder = Path.Combine(_environment.WebRootPath, "uploads", folderName);
 
             if (!Directory.Exists(uploadsFolder))
                 Directory.CreateDirectory(uploadsFolder);
 
-            // Generate a unique filename to prevent overwriting
             var uniqueFileName = $"{Guid.NewGuid()}_{file.FileName}";
             var filePath = Path.Combine(uploadsFolder, uniqueFileName);
 
@@ -28,7 +26,6 @@ namespace Infrastructure.Services
                 await file.CopyToAsync(fileStream);
             }
 
-            // Return the relative URL for the database
             return $"/uploads/{folderName}/{uniqueFileName}";
         }
 
