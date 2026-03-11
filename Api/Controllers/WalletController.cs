@@ -1,3 +1,4 @@
+using Application.Features.Wallets.Commands.RequestPayout;
 using Application.Features.Wallets.Queries.GetVendorWallet;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -12,5 +13,9 @@ namespace Api.Controllers
         [HttpGet]
         public async Task<ActionResult> GetWallet()
             => HandleResult(await mediator.Send(new GetVendorWalletQuery()));
+
+        [HttpPost("payouts")]
+        public async Task<ActionResult> RequestPayout([FromBody] RequestPayoutCommand command)
+            => HandleResult(await mediator.Send(command));
     }
 }
