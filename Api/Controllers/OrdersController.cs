@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Application.Features.Orders.Queries.GetOrderById;
 using Application.Features.Orders.Queries.GetMyOrders;
+using Application.Features.Orders.Queries.GetVendorOrders;
 
 namespace Api.Controllers
 {
@@ -23,5 +24,10 @@ namespace Api.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult> GetOrder(Guid id)
             => HandleResult(await mediator.Send(new GetOrderByIdQuery(id)));
+
+        [HttpGet("vendor")]
+        [Authorize(Policy = "VendorOnly")]
+        public async Task<ActionResult> GetVendorOrders()
+            => HandleResult(await mediator.Send(new GetVendorOrdersQuery()));
     }
 }
