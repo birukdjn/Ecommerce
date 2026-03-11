@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 using Application.Features.Orders.Queries.GetOrderById;
 using Application.Features.Orders.Queries.GetMyOrders;
 using Application.Features.Orders.Queries.GetVendorOrders;
+using Application.Features.Orders.Commands.UpdateSubOrderStatus;
+using Domain.Enums;
 
 namespace Api.Controllers
 {
@@ -29,5 +31,10 @@ namespace Api.Controllers
         [Authorize(Policy = "VendorOnly")]
         public async Task<ActionResult> GetVendorOrders()
             => HandleResult(await mediator.Send(new GetVendorOrdersQuery()));
+
+        [HttpPatch("sub-order/{id}/status")]
+        [Authorize(Policy = "VendorOnly")]
+        public async Task<ActionResult> UpdateSubOrderStatus(Guid id, [FromBody] SubOrderStatus status)
+            => HandleResult(await mediator.Send(new UpdateSubOrderStatusCommand(id, status)));
     }
 }

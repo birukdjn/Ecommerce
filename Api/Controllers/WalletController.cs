@@ -1,0 +1,16 @@
+using Application.Features.Wallets.Queries.GetVendorWallet;
+using MediatR;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
+namespace Api.Controllers
+{
+    [Authorize(Policy = "VendorOnly")]
+    [Route("api/vendor/wallet")]
+    public class WalletController(ISender mediator) : ApiControllerBase
+    {
+        [HttpGet]
+        public async Task<ActionResult> GetWallet()
+            => HandleResult(await mediator.Send(new GetVendorWalletQuery()));
+    }
+}
