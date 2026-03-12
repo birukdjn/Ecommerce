@@ -14,8 +14,8 @@ namespace Application.Features.Carts.Queries.GetCart
         public async Task<Result<CartDto>> Handle(GetCartQuery request, CancellationToken cancellationToken)
         {
             var userId = currentUserService.GetCurrentUserId();
-            // if (userId == null || userId == Guid.Empty)
-            //     return Result<CartDto>.Failure("Unauthorized");
+            if (userId == null || userId == Guid.Empty)
+                return Result<CartDto>.Failure("Unauthorized");
 
             var cart = await unitOfWork.Repository<Cart>().Query()
                 .Include(c => c.Items)

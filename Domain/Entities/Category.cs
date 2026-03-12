@@ -2,7 +2,7 @@
 
 namespace Domain.Entities
 {
-    public class Category : AuditableEntity
+    public class Category : VersionedEntity
     {
         public required string Name { get; set; }
         public string? Description { get; set; }

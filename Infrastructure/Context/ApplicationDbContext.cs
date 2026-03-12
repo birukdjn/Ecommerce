@@ -86,28 +86,42 @@ namespace Infrastructure.Context
                         .HasColumnType("xid")
                         .ValueGeneratedOnAddOrUpdate()
                         .IsConcurrencyToken();
-
-
                 }
+
+                if (typeof(TransactionEntity).IsAssignableFrom(entityType.ClrType))
+                {
+                    builder.Entity(entityType.ClrType)
+                        .Property(nameof(TransactionEntity.RowVersion))
+                        .HasColumnName("xmin")
+                        .HasColumnType("xid")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .IsConcurrencyToken();
+                }
+
+
+
                 if (typeof(AuditableEntity).IsAssignableFrom(entityType.ClrType))
                 {
                     builder.Entity(entityType.ClrType).HasQueryFilter(ConvertFilterExpression(entityType.ClrType));
-                    
+
                 }
 
-               
+
             }
 
             // LOGICAL MULTI-TENANCY FILTERS
 
             builder.Entity<Product>().HasQueryFilter(p =>
+
                 _currentUserService.IsAdmin() || (
-                    !p.IsDeleted && (
+                        !p.IsDeleted && (
                         _currentUserService.GetCurrentVendorId() == null ||
+
                         p.VendorId == _currentUserService.GetCurrentVendorId()
+
                     )
-                )
-            );
+                    )
+                );
         }
 
 

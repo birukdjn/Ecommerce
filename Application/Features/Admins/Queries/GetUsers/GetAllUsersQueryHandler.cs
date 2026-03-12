@@ -1,10 +1,9 @@
 using Application.DTOs.Admin;
-using Application.Features.Admins.Queries.GetUsers;
 using Domain.Common;
 using Domain.Common.Interfaces;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-namespace Application.Features.Admins.stats.GetUsers
+namespace Application.Features.Admins.Queries.GetUsers
 {
     public class GetAllUsersHandler(IApplicationDbContext context)
         : IRequestHandler<GetAllUsersQuery, Result<List<UserSummaryDto>>>
