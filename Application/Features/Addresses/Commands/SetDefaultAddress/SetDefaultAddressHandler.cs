@@ -18,7 +18,7 @@ namespace Application.Features.Addresses.Commands.SetDefaultAddress
 
             var repo = unitOfWork.Repository<Address>();
 
-            // Fetch all addresses for the user, including deleted if necessary
+            // Fetch all addresses for the user
             var userAddresses = await repo.Query()
                 .Where(a => a.UserId == userId)
                 .ToListAsync(cancellationToken);
@@ -29,7 +29,7 @@ namespace Application.Features.Addresses.Commands.SetDefaultAddress
             // Set the selected address as default, others as not default
             foreach (var address in userAddresses)
             {
-                address.IsDefault = (address.Id == command.Id);
+                address.IsDefault = address.Id == command.Id;
                 repo.Update(address);
             }
 

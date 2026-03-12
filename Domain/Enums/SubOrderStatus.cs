@@ -5,6 +5,7 @@ namespace Domain.Enums
     {
         Pending,
         Delivered,
+        Refunded
 
     }
 }

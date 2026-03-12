@@ -17,5 +17,6 @@ namespace Api.Controllers
         [HttpPost("payouts")]
         public async Task<ActionResult> RequestPayout([FromBody] RequestPayoutCommand command)
             => HandleResult(await mediator.Send(command));
+
     }
 }

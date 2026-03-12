@@ -1,4 +1,3 @@
-using Api.Controllers;
 using Application.Features.Orders.Commands.Checkout;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
@@ -36,5 +35,6 @@ namespace Api.Controllers
         [Authorize(Policy = "VendorOnly")]
         public async Task<ActionResult> UpdateSubOrderStatus(Guid id, [FromBody] SubOrderStatus status)
             => HandleResult(await mediator.Send(new UpdateSubOrderStatusCommand(id, status)));
+
     }
 }

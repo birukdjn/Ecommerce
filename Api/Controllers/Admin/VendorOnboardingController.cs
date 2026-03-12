@@ -1,4 +1,4 @@
-using Application.DTOs;
+using Application.DTOs.Admin;
 using Application.Features.Admins.Vendors.Commands.ApproveVendor;
 using Application.Features.Admins.Vendors.Commands.RejectVendor;
 using Application.Features.Admins.Vendors.Queries.GetVendorRequestById;
