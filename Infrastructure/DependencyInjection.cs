@@ -2,6 +2,9 @@
 using Application.Interfaces;
 using Domain.Common.Interfaces;
 using Domain.Entities;
+using Hangfire;
+using Hangfire.PostgreSql;
+using Infrastructure.BackgroundJobs;
 using Infrastructure.Context;
 using Infrastructure.Identity;
 using Infrastructure.Options;
@@ -20,10 +23,31 @@ namespace Infrastructure
         public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddHttpContextAccessor();
+            var databaseSection = configuration.GetSection(DatabaseOptions.SectionName);
+            var smsSection = configuration.GetSection(AfroSmsOptions.SectionName);
+            var connectionString = databaseSection["ConnectionString"];
+
+            // 1. Register Hangfire with Postgres
+            services.AddHangfire(config => config
+                .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+                .UseSimpleAssemblyNameTypeSerializer()
+                .UseRecommendedSerializerSettings()
+                .UsePostgreSqlStorage(options =>
+                    options.UseNpgsqlConnection(connectionString),
+                    new PostgreSqlStorageOptions
+                    {
+                        SchemaName = "hangfire"
+                    }));
+
+            // 2. Add the background worker server
+            services.AddHangfireServer();
+
 
 
             services.AddScoped<IFileService, FileService>();
             services.AddScoped<ISmsSender, SmsSender>();
+            services.AddScoped<IJobService, HangfireJobService>();
+
             services.AddHttpClient("AfroSms", client =>
             {
                 client.BaseAddress = new Uri("https://api.afromessage.com/");
@@ -33,12 +57,12 @@ namespace Infrastructure
 
             // Configure options
             services.AddOptions<DatabaseOptions>()
-                .Bind(configuration.GetSection(DatabaseOptions.SectionName))
+                .Bind(databaseSection)
                 .ValidateDataAnnotations()
                 .ValidateOnStart();
 
             services.AddOptions<AfroSmsOptions>()
-                .Bind(configuration.GetSection(AfroSmsOptions.SectionName))
+                .Bind(smsSection)
                 .ValidateDataAnnotations()
                 .ValidateOnStart();
 

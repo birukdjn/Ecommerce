@@ -1,5 +1,6 @@
 ﻿using Api.Middleware;
 using Domain.Constants;
+using Hangfire;
 using Microsoft.OpenApi;
 
 namespace Api
@@ -71,6 +72,9 @@ namespace Api
                     options.SwaggerEndpoint("/swagger/v1/swagger.json", "E-Commerce Multi-Vendor API");
                 });
             }
+
+
+            app.UseHangfireDashboard("/hangfire");
 
             app.UseHttpsRedirection();
             app.UseAuthentication();
