@@ -1,4 +1,5 @@
-﻿using Application.Features.Users.Commands.Identity;
+﻿using Application.Common.Interfaces;
+using Application.Features.Users.Commands.Identity;
 using Application.Interfaces;
 using Domain.Constants;
 using Domain.Entities;
@@ -36,7 +37,6 @@ public static class IdentityApiEndpointRouteBuilderExtensions
 
         var timeProvider = endpoints.ServiceProvider.GetRequiredService<TimeProvider>();
         var bearerTokenOptions = endpoints.ServiceProvider.GetRequiredService<IOptionsMonitor<BearerTokenOptions>>();
-        var emailSender = endpoints.ServiceProvider.GetRequiredService<IEmailSender<TUser>>();
         var linkGenerator = endpoints.ServiceProvider.GetRequiredService<LinkGenerator>();
 
         // string? confirmEmailEndpointName = null;
@@ -48,7 +48,8 @@ public static class IdentityApiEndpointRouteBuilderExtensions
             ([FromBody] RegisterCommand command, HttpContext context, [FromServices] IServiceProvider serviceProvider) =>
         {
             var userManager = serviceProvider.GetRequiredService<UserManager<TUser>>();
-            var smsSender = serviceProvider.GetRequiredService<ISmsSender>();
+            var jobService = serviceProvider.GetRequiredService<IJobService>();
+
 
             if (!userManager.SupportsUserEmail)
             {
@@ -107,13 +108,10 @@ public static class IdentityApiEndpointRouteBuilderExtensions
 
             if (!string.IsNullOrEmpty(addedPhoneNumber))
             {
-                var smsResult = await smsSender.SendSmsChallengeAsync(addedPhoneNumber);
-                if (smsResult.IsSuccess)
-                {
-                    return TypedResults.Ok(smsResult.Value);
-                }
+                jobService.Enqueue<ISmsSender>(sms => sms.SendSmsChallengeAsync(addedPhoneNumber));
 
-                return CreateValidationProblem("SmsError", smsResult.Error ?? "Failed to send verification SMS.");
+                return TypedResults.Ok("Verification SMS is being processed.");
+
             }
             return TypedResults.Ok(string.Empty);
         });
@@ -200,10 +198,10 @@ public static class IdentityApiEndpointRouteBuilderExtensions
 
         // POST: /verify-phone
         routeGroup.MapPost("/verify-phone", async Task<Results<Ok, ValidationProblem, NotFound>>
-            (VerifyPhoneCommand command, [FromServices] IServiceProvider sp) =>
+            (VerifyPhoneCommand command, [FromServices] IServiceProvider serviceProvider) =>
         {
-            var userManager = sp.GetRequiredService<UserManager<TUser>>();
-            var smsSender = sp.GetRequiredService<ISmsSender>();
+            var userManager = serviceProvider.GetRequiredService<UserManager<TUser>>();
+            var smsSender = serviceProvider.GetRequiredService<ISmsSender>();
             var phone = command.PhoneNumber;
             var code = command.Code;
             var verificationId = command.VerificationId;
@@ -239,10 +237,12 @@ public static class IdentityApiEndpointRouteBuilderExtensions
 
         // POST: /forgotPassword
         routeGroup.MapPost("/forgot-password", async Task<Results<Ok<object>, ValidationProblem>>
-            ([FromBody] ForgotPasswordCommand command, [FromServices] IServiceProvider sp) =>
+            ([FromBody] ForgotPasswordCommand command, [FromServices] IServiceProvider serviceProvider) =>
         {
-            var userManager = sp.GetRequiredService<UserManager<TUser>>();
-            var smsSender = sp.GetRequiredService<ISmsSender>();
+            var userManager = serviceProvider.GetRequiredService<UserManager<TUser>>();
+            var jobService = serviceProvider.GetRequiredService<IJobService>();
+
+
             var phone = command.PhoneNumber;
             var user = await userManager.Users.FirstOrDefaultAsync(u =>
                  EF.Property<string>(u, "PhoneNumber") == phone);
@@ -251,14 +251,7 @@ public static class IdentityApiEndpointRouteBuilderExtensions
             {
                 var code = await userManager.GenerateTwoFactorTokenAsync(user, "Phone");
 
-                bool isSent = await smsSender.SendSmsAsync(
-                    phone,
-                    $"Your password reset code is: {code}");
-
-                if (!isSent)
-                {
-                    return CreateValidationProblem("SmsError", "Failed to send reset code.");
-                }
+                jobService.Enqueue<ISmsSender>(sms => sms.SendSmsAsync(phone, $"Your password reset code is: {code}"));
 
             }
 
@@ -270,9 +263,9 @@ public static class IdentityApiEndpointRouteBuilderExtensions
 
         // POST: /resetPassword
         routeGroup.MapPost("/reset-password", async Task<Results<Ok<object>, ValidationProblem>>
-            ([FromBody] ResetPasswordCommand command, [FromServices] IServiceProvider sp) =>
+            ([FromBody] ResetPasswordCommand command, [FromServices] IServiceProvider serviceProvider) =>
         {
-            var userManager = sp.GetRequiredService<UserManager<TUser>>();
+            var userManager = serviceProvider.GetRequiredService<UserManager<TUser>>();
 
             var phone = command.PhoneNumber;
             var resetCode = command.ResetCode;
