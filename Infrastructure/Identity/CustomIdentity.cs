@@ -48,7 +48,8 @@ public static class IdentityApiEndpointRouteBuilderExtensions
             ([FromBody] RegisterCommand command, HttpContext context, [FromServices] IServiceProvider serviceProvider) =>
         {
             var userManager = serviceProvider.GetRequiredService<UserManager<TUser>>();
-            var jobService = serviceProvider.GetRequiredService<IJobService>();
+            var smsSender = serviceProvider.GetRequiredService<ISmsSender>();
+
 
 
             if (!userManager.SupportsUserEmail)
@@ -108,9 +109,13 @@ public static class IdentityApiEndpointRouteBuilderExtensions
 
             if (!string.IsNullOrEmpty(addedPhoneNumber))
             {
-                jobService.Enqueue<ISmsSender>(sms => sms.SendSmsChallengeAsync(addedPhoneNumber));
+                var smsResult = await smsSender.SendSmsChallengeAsync(addedPhoneNumber);
+                if (smsResult.IsSuccess)
+                {
 
-                return TypedResults.Ok("Verification SMS is being processed.");
+                    return TypedResults.Ok(smsResult.Value);
+                }
+                return CreateValidationProblem("SmsError", smsResult.Error ?? "Failed to send verification SMS.");
 
             }
             return TypedResults.Ok(string.Empty);
@@ -226,8 +231,13 @@ public static class IdentityApiEndpointRouteBuilderExtensions
 
             if (identityResult.Succeeded && user is ApplicationUser customUser)
             {
+                var jobService = serviceProvider.GetRequiredService<IJobService>();
+                jobService.Enqueue<ISmsSender>(sms => sms.SendSmsAsync(phone, "Welcome to our platform! Your account is now active."));
+
                 customUser.IsActive = true;
                 await userManager.UpdateAsync(user);
+                return TypedResults.Ok();
+
             }
             return identityResult.Succeeded
                 ? TypedResults.Ok()
