@@ -7,8 +7,9 @@ using Application.Features.Orders.Queries.GetMyOrders;
 using Application.Features.Orders.Queries.GetVendorOrders;
 using Application.Features.Orders.Commands.UpdateSubOrderStatus;
 using Domain.Enums;
+using Api.Controllers.Common;
 
-namespace Api.Controllers
+namespace Api.Controllers.Order
 {
     [Authorize]
     [Route("api/orders")]

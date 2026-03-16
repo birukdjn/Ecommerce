@@ -1,3 +1,4 @@
+using Api.Controllers.Common;
 using Application.DTOs.Admin;
 using Application.DTOs.Category;
 using Application.Features.Categories.Commands.CreateCategory;
@@ -10,7 +11,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Api.Controllers
+namespace Api.Controllers.Category
 {
     [Authorize(Policy = "AdminOnly")]
     [Route("api/categories")]

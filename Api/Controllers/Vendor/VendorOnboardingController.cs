@@ -1,3 +1,4 @@
+using Api.Controllers.Common;
 using Application.DTOs.Admin;
 using Application.Features.Admins.Commands.ApproveVendor;
 using Application.Features.Admins.Commands.RejectVendor;
@@ -8,7 +9,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 
-namespace Api.Controllers.Admin
+namespace Api.Controllers.Vendor
 {
     [Authorize(Policy = "AdminOnly")]
     [Route("api/vendor-onboarding")]

@@ -1,9 +1,10 @@
-﻿using Application.Features.Users.Commands.UpdateProfile;
+﻿using Api.Controllers.Common;
+using Application.Features.Users.Commands.UpdateProfile;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Api.Controllers
+namespace Api.Controllers.User
 {
     [Authorize]
     [Route("api/profile")]

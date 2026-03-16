@@ -1,10 +1,11 @@
+using Api.Controllers.Common;
 using Application.Features.Wallets.Commands.RequestPayout;
 using Application.Features.Wallets.Queries.GetVendorWallet;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Api.Controllers
+namespace Api.Controllers.Wallet
 {
     [Authorize(Policy = "VendorOnly")]
     [Route("api/vendor/wallet")]

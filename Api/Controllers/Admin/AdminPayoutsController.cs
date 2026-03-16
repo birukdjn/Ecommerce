@@ -1,3 +1,4 @@
+using Api.Controllers.Common;
 using Application.Features.Admins.Commands.ProcessPayout;
 using Application.Features.Admins.Queries.GetPendingPayouts;
 using MediatR;

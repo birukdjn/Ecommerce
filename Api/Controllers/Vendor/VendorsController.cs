@@ -1,9 +1,10 @@
-﻿using Application.Features.Vendors.Commands.BecomeVendor;
+﻿using Api.Controllers.Common;
+using Application.Features.Vendors.Commands.BecomeVendor;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Api.Controllers
+namespace Api.Controllers.Vendor
 {
     [Authorize]
     [Route("api/vendors")]

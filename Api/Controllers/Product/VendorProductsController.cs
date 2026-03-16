@@ -1,3 +1,4 @@
+using Api.Controllers.Common;
 using Application.DTOs.Product;
 using Application.Features.Products.Commands.CreateProduct;
 using Application.Features.Products.Commands.DeleteProduct;
@@ -10,7 +11,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Api.Controllers;
+namespace Api.Controllers.Product;
 
 [Route("api/vendor/products")]
 [Authorize(Roles = "Vendor")]

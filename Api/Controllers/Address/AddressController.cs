@@ -1,4 +1,5 @@
-﻿using Application.DTOs.Address;
+﻿using Api.Controllers.Common;
+using Application.DTOs.Address;
 using Application.Features.Addresses.Commands.CreateAddress;
 using Application.Features.Addresses.Commands.DeleteAddress;
 using Application.Features.Addresses.Commands.RestoreAddress;
@@ -12,7 +13,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 
-namespace Api.Controllers
+namespace Api.Controllers.Address
 {
     [Authorize]
     [Route("api/addresses")]

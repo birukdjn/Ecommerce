@@ -1,7 +1,7 @@
 using Domain.Common;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Api.Controllers
+namespace Api.Controllers.Common
 {
     [ApiController]
     [Route("api/[controller]")]
@@ -14,7 +14,7 @@ namespace Api.Controllers
             if (result.IsSuccess)
             {
                 if (result.Value is bool b && b) return NoContent();
-                
+
                 if (result.Value == null) return NoContent();
 
                 return Ok(result.Value);

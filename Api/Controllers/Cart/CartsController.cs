@@ -1,3 +1,4 @@
+using Api.Controllers.Common;
 using Application.DTOs.Cart;
 using Application.Features.Carts.Commands.AddToCart;
 using Application.Features.Carts.Commands.ClearCart;
@@ -11,7 +12,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Api.Controllers
+namespace Api.Controllers.Cart
 {
     [Authorize]
     [Route("api/cart")]

@@ -1,3 +1,4 @@
+using Api.Controllers.Common;
 using Application.DTOs.Admin;
 using Application.Features.Admins.Commands.ApproveProduct;
 using Application.Features.Admins.Commands.RejectProduct;
@@ -8,7 +9,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Api.Controllers.Admin
+namespace Api.Controllers.Product
 {
 
     [Authorize(Roles = "Admin")]

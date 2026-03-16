@@ -1,3 +1,4 @@
+using Api.Controllers.Common;
 using Application.DTOs.Product;
 using Application.Features.ProductImages.Commands.AddProductImage;
 using Application.Features.ProductImages.Commands.BulkAddProductImage;
@@ -13,7 +14,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Api.Controllers
+namespace Api.Controllers.Product
 {
     [Route("api/vendor/products/{productId:guid}/images")]
     [Authorize(policy: "VendorOnly")]
