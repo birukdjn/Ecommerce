@@ -1,5 +1,6 @@
 ﻿using Application.Features.Users.Commands.Identity;
 using Application.Interfaces;
+using Application.Templates.Email;
 using Domain.Constants;
 using Domain.Entities;
 using Infrastructure.Extensions;
@@ -122,11 +123,13 @@ public static class IdentityApiEndpointRouteBuilderExtensions
 
         // POST: /login
         routeGroup.MapPost("/login", async Task<Results<SignInHttpResult, ProblemHttpResult>>
-            ([FromBody] LoginCommand command, [FromServices] IServiceProvider sp) =>
+            ([FromBody] LoginCommand command, [FromServices] IServiceProvider serviceProvider) =>
         {
 
-            var userManager = sp.GetRequiredService<UserManager<TUser>>();
-            var signInManager = sp.GetRequiredService<SignInManager<TUser>>();
+            var userManager = serviceProvider.GetRequiredService<UserManager<TUser>>();
+            var signInManager = serviceProvider.GetRequiredService<SignInManager<TUser>>();
+            var jobService = serviceProvider.GetRequiredService<IJobService>();
+
 
             signInManager.AuthenticationScheme = IdentityConstants.BearerScheme;
 
@@ -147,6 +150,15 @@ public static class IdentityApiEndpointRouteBuilderExtensions
                          user,
                          command.Password,
                          lockoutOnFailure: true);
+
+            if (result.Succeeded)
+            {
+                // Fetch the user's email and name safely
+                var userEmail = await userManager.GetEmailAsync(user);
+                var fullName = (user is ApplicationUser customUser) ? customUser.FullName : "User";
+
+
+            }
 
             /*
                 if (result.RequiresTwoFactor)
@@ -232,6 +244,11 @@ public static class IdentityApiEndpointRouteBuilderExtensions
             {
                 var jobService = serviceProvider.GetRequiredService<IJobService>();
                 jobService.Enqueue<ISmsSender>(sms => sms.SendSmsAsync(phone, "Welcome to our platform! Your account is now active."));
+
+                jobService.Enqueue<IEmailSender>(email => email.SendEmailAsync(
+                    customUser.Email!,
+                    "Welcome to the Platform!",
+                    EmailTemplates.GetWelcomeEmail(customUser.FullName)));
 
                 customUser.IsActive = true;
                 await userManager.UpdateAsync(user);
@@ -544,7 +561,6 @@ public static class IdentityApiEndpointRouteBuilderExtensions
 
         return new IdentityEndpointsConventionBuilder(routeGroup);
     }
-
 
     private static ValidationProblem CreateValidationProblem(string errorCode, string errorDescription) =>
         TypedResults.ValidationProblem(new Dictionary<string, string[]> { { errorCode, [errorDescription] } });

@@ -23,7 +23,10 @@ namespace Infrastructure
             services.AddHttpContextAccessor();
             var databaseSection = configuration.GetSection(DatabaseOptions.SectionName);
             var smsSection = configuration.GetSection(AfroSmsOptions.SectionName);
+            var emailSection = configuration.GetSection(EmailOptions.SectionName);
             var connectionString = databaseSection["ConnectionString"];
+
+            services.Configure<EmailOptions>(configuration.GetSection(EmailOptions.SectionName));
 
             // 1. Register Hangfire with Postgres
             services.AddHangfire(config => config
@@ -43,6 +46,7 @@ namespace Infrastructure
 
 
             services.AddScoped<IFileService, FileService>();
+            services.AddTransient<IEmailSender, EmailSender>();
             services.AddScoped<ISmsSender, SmsSender>();
             services.AddScoped<IJobService, HangfireJobService>();
 
@@ -61,6 +65,11 @@ namespace Infrastructure
 
             services.AddOptions<AfroSmsOptions>()
                 .Bind(smsSection)
+                .ValidateDataAnnotations()
+                .ValidateOnStart();
+
+            services.AddOptions<EmailOptions>()
+                .Bind(emailSection)
                 .ValidateDataAnnotations()
                 .ValidateOnStart();
 
