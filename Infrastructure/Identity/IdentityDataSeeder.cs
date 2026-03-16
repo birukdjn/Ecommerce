@@ -38,7 +38,8 @@ namespace Infrastructure.Identity
                 new { Email = "user@gmail.com", Password = "User123!", FullName="User User", Phone="0908574808", Role=Roles.Customer, IsVendor=false, StoreName=(string?)null },
                 new { Email = "birukdejene2000@gmail.com", Password = "User123!", FullName="User User", Phone="0908574809", Role=Roles.Customer, IsVendor=false, StoreName=(string?)null },
                 new { Email = "vendor@gmail.com", Password = "Vendor123!", FullName="Vendor Vendor", Phone="0912345678", Role=Roles.Vendor, IsVendor=true, StoreName=(string?)"Vendor Store" },
-                new { Email = "vendor2@gmail.com", Password = "Vendor2123!", FullName="Vendor2 Vendor2", Phone="0987654321", Role=Roles.Vendor, IsVendor=true, StoreName=(string?)"Vendor2 Store" }
+                new { Email = "vendor2@gmail.com", Password = "Vendor2123!", FullName="Vendor2 Vendor2", Phone="0987654321", Role=Roles.Vendor, IsVendor=true, StoreName=(string?)"Vendor2 Store" },
+                new { Email = "birukyihun2000@gmail.com", Password = "Vendor2123!", FullName="biruk yihun", Phone="0987654322", Role=Roles.Vendor, IsVendor=true, StoreName=(string?)"biruk yihun" }
             };
 
             foreach (var userInfo in usersToSeed)

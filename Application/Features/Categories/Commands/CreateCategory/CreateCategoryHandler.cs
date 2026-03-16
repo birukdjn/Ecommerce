@@ -13,7 +13,7 @@ namespace Application.Features.Categories.Commands.CreateCategory
     {
         public async Task<Result<CategoryDto>> Handle(CreateCategoryCommand command, CancellationToken cancellationToken)
         {
-            if (currentUserService.IsAdmin())
+            if (!currentUserService.IsAdmin())
                 return Result<CategoryDto>.Failure("Unauthorized");
 
             var categoryRepo = unitOfWork.Repository<Category>();

@@ -64,5 +64,33 @@ namespace Application.Templates.Email
                     This is an automated security notification.
                 </div>
             </div>";
+
+            // 5. Product Approval Notification for Vendor
+        public static string GetProductApprovedEmail(string vendorName, string productName) => $@"
+            <div style='{ContainerStyle}'>
+                <h2 style='color: #28a745;'>Product Approved!</h2>
+                <p>Hello {vendorName},</p>
+                <p>Great news! Your product <strong>{productName}</strong> has been reviewed and approved by our administrators.</p>
+                <p>It is now live on the storefront and available for customers to purchase.</p>
+                <div style='{FooterStyle}'>
+                    Thank you for partnering with us.
+                </div>
+            </div>";
+
+            // 6. Product Rejected Notification for Vendor
+public static string GetProductRejectedEmail(string vendorName, string productName, string reason) => $@"
+    <div style='{ContainerStyle}'>
+        <h2 style='color: #dc3545;'>Product Update: Action Required</h2>
+        <p>Hello {vendorName},</p>
+        <p>Your product <strong>{productName}</strong> was reviewed by our team and, unfortunately, it could not be approved at this time.</p>
+        <div style='background-color: #fff5f5; border-left: 4px solid #dc3545; padding: 15px; margin: 20px 0;'>
+            <strong>Reason for Rejection:</strong><br/>
+            {reason}
+        </div>
+        <p>Please update the product details based on the feedback above and resubmit it for approval.</p>
+        <div style='{FooterStyle}'>
+            If you have questions, please reply to this email.
+        </div>
+    </div>";
     }
 }

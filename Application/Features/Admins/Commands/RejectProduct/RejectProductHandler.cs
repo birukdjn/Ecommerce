@@ -2,12 +2,15 @@ using Application.Interfaces;
 using Domain.Common;
 using Domain.Entities;
 using MediatR;
+using Application.Templates.Email;
+using Microsoft.EntityFrameworkCore;
 
 namespace Application.Features.Admins.Commands.RejectProduct
 {
     public class RejectProductHandler(
         IUnitOfWork unitOfWork,
-        ICurrentUserService currentUserService) : IRequestHandler<RejectProductCommand, Result<Unit>>
+        ICurrentUserService currentUserService,
+        IJobService jobService) : IRequestHandler<RejectProductCommand, Result<Unit>>
     {
         public async Task<Result<Unit>> Handle(RejectProductCommand command, CancellationToken cancellationToken)
         {
@@ -24,6 +27,25 @@ namespace Application.Features.Admins.Commands.RejectProduct
 
             productRepo.Update(product);
             await unitOfWork.Complete();
+
+            var vendorRepo = unitOfWork.Repository<Vendor>();
+            var vendor = await vendorRepo.Query()
+                .Include(v => v.User)
+                .FirstOrDefaultAsync(v => v.Id == product.VendorId, cancellationToken);
+
+            // 3. Enqueue the background email
+            if (vendor?.User != null && !string.IsNullOrEmpty(vendor.User.Email))
+            {
+                jobService.Enqueue<IEmailSender>(sender =>
+                    sender.SendEmailAsync(
+                        vendor.User.Email,
+                        $"Action Required: Product Rejected - {product.Name}",
+                        EmailTemplates.GetProductRejectedEmail(
+                            vendor.User.FullName ?? vendor.StoreName,
+                            product.Name,
+                            command.Reason)
+                    ));
+            }
             return Result<Unit>.Success(Unit.Value);
         }
     }
