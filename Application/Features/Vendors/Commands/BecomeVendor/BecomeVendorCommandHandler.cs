@@ -1,5 +1,5 @@
-﻿using Domain.Common;
-using Domain.Common.Interfaces;
+﻿using Application.Interfaces;
+using Domain.Common;
 using Domain.Entities;
 using Domain.Enums;
 using MediatR;
@@ -16,7 +16,7 @@ namespace Application.Features.Vendors.Commands.BecomeVendor
 
             if (userId == null || userId == Guid.Empty)
                 return Result<Guid>.Failure("User not authenticated.");
-            
+
             var user = await context.Users
                 .Include(u => u.Vendor)
                 .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
@@ -25,7 +25,7 @@ namespace Application.Features.Vendors.Commands.BecomeVendor
             if (user == null)
                 return Result<Guid>.Failure("User not found.");
 
-            
+
             if (user.Vendor != null)
             {
                 if (user.Vendor.Status == VendorStatus.Active)
@@ -39,7 +39,7 @@ namespace Application.Features.Vendors.Commands.BecomeVendor
             using var transaction = await context.Database.BeginTransactionAsync(cancellationToken);
             try
             {
-                
+
                 var vendor = new Vendor
                 {
                     Id = Guid.NewGuid(),
@@ -49,15 +49,15 @@ namespace Application.Features.Vendors.Commands.BecomeVendor
                     LogoUrl = request.LogoUrl,
                     Status = VendorStatus.Pending,
                     LicenseUrl = request.LicenseUrl,
-                    
-                    
+
+
                 };
 
                 var wallet = new VendorWallet
                 {
                     Id = Guid.NewGuid(),
                     VendorId = vendor.Id,
-                    
+
                 };
                 context.Vendors.Add(vendor);
                 context.VendorWallets.Add(wallet);

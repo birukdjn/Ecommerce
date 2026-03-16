@@ -1,5 +1,5 @@
-﻿using Domain.Common;
-using Domain.Common.Interfaces;
+﻿using Application.Interfaces;
+using Domain.Common;
 using Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;

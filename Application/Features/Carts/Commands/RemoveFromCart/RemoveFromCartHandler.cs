@@ -1,8 +1,8 @@
-using Domain.Common.Interfaces;
 using Domain.Common;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Domain.Entities;
+using Application.Interfaces;
 
 namespace Application.Features.Carts.Commands.RemoveFromCart;
 

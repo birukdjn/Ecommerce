@@ -1,5 +1,5 @@
 ﻿using System.Security.Claims;
-using Domain.Common.Interfaces;
+using Application.Interfaces;
 using Domain.Constants;
 using Microsoft.AspNetCore.Http;
 

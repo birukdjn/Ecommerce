@@ -4,7 +4,7 @@ using Domain.Entities;
 using Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using Domain.Common.Interfaces;
+using Application.Interfaces;
 
 namespace Application.Features.Admins.Queries.GetPendingPayouts
 {

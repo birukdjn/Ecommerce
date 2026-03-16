@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Infrastructure.Context;
-using Domain.Common.Interfaces;
+using Application.Interfaces;
 
 namespace Infrastructure;
 

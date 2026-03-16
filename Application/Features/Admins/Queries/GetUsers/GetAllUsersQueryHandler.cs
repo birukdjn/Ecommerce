@@ -1,6 +1,6 @@
 using Application.DTOs.Admin;
+using Application.Interfaces;
 using Domain.Common;
-using Domain.Common.Interfaces;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 namespace Application.Features.Admins.Queries.GetUsers

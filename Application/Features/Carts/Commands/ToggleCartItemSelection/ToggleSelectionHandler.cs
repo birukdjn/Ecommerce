@@ -1,5 +1,5 @@
+using Application.Interfaces;
 using Domain.Common;
-using Domain.Common.Interfaces;
 using Domain.Entities;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -16,7 +16,7 @@ namespace Application.Features.Carts.Commands.ToggleCartItemSelection
             var userId = currentUserService.GetCurrentUserId();
             if (userId == null || userId == Guid.Empty)
                 return Result<Unit>.Failure("Unauthorized");
-                
+
             var item = await unitOfWork.Repository<CartItem>().Query()
                 .Include(i => i.Cart)
                 .FirstOrDefaultAsync(i => i.Id == command.CartItemId && i.Cart.UserId == userId, cancellationToken);

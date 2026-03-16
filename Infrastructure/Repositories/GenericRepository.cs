@@ -1,7 +1,7 @@
 ﻿using Domain.Common;
-using Domain.Common.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Infrastructure.Context;
+using Application.Interfaces;
 
 namespace Infrastructure.Repositories
 {

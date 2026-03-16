@@ -1,9 +1,9 @@
-using Domain.Common.Interfaces;
 using Application.DTOs.Order;
 using Domain.Common;
 using Domain.Entities;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Application.Interfaces;
 
 namespace Application.Features.Orders.Queries.GetVendorOrders
 {

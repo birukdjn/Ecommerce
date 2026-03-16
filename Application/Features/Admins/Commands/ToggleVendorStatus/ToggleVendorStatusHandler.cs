@@ -1,8 +1,8 @@
 using Domain.Common;
-using Domain.Common.Interfaces;
 using Domain.Entities;
 using MediatR;
 using Domain.Enums;
+using Application.Interfaces;
 
 namespace Application.Features.Admins.Commands.ToggleVendorStatus
 {

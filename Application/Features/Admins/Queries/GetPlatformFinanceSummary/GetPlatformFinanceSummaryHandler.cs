@@ -1,10 +1,10 @@
-using Domain.Common.Interfaces;
 using Domain.Common;
 using Domain.Entities;
 using Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Application.DTOs.Admin;
+using Application.Interfaces;
 
 namespace Application.Features.Admins.Queries.GetPlatformFinanceSummary
 {

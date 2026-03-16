@@ -1,8 +1,8 @@
 using Domain.Common;
 using MediatR;
-using Domain.Common.Interfaces;
 using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
+using Application.Interfaces;
 
 namespace Application.Features.Addresses.Commands.RestoreAddress
 {

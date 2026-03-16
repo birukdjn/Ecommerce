@@ -1,6 +1,6 @@
 using System.Linq.Expressions;
 
-namespace Application.Common.Interfaces;
+namespace Application.Interfaces;
 
 public interface IJobService
 {

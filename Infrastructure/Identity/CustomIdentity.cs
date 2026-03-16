@@ -1,5 +1,4 @@
-﻿using Application.Common.Interfaces;
-using Application.Features.Users.Commands.Identity;
+﻿using Application.Features.Users.Commands.Identity;
 using Application.Interfaces;
 using Domain.Constants;
 using Domain.Entities;

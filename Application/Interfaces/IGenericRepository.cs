@@ -1,4 +1,6 @@
-﻿namespace Domain.Common.Interfaces
+﻿using Domain.Common;
+
+namespace Application.Interfaces
 {
     public interface IGenericRepository<T> where T : BaseEntity
     {

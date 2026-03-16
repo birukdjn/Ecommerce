@@ -1,9 +1,9 @@
-using Domain.Common.Interfaces;
 using Application.DTOs.Wallet;
 using Domain.Common;
 using Domain.Entities;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Application.Interfaces;
 
 namespace Application.Features.Wallets.Queries.GetVendorWallet;
 

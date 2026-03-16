@@ -1,5 +1,6 @@
-﻿
-namespace Domain.Common.Interfaces
+﻿using Domain.Common;
+
+namespace Application.Interfaces
 {
     public interface IUnitOfWork : IDisposable
     {

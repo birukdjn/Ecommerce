@@ -1,6 +1,4 @@
-﻿using Application.Common.Interfaces;
-using Application.Interfaces;
-using Domain.Common.Interfaces;
+﻿using Application.Interfaces;
 using Domain.Entities;
 using Hangfire;
 using Hangfire.PostgreSql;

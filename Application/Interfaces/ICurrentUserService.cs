@@ -1,5 +1,4 @@
-﻿
-namespace Domain.Common.Interfaces
+﻿namespace Application.Interfaces
 {
     public interface ICurrentUserService
     {
