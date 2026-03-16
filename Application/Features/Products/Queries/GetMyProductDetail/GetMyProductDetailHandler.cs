@@ -2,6 +2,7 @@ using Application.DTOs.Product;
 using Application.Interfaces;
 using Domain.Common;
 using Domain.Entities;
+using Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -34,7 +35,7 @@ namespace Application.Features.Products.Queries.GetMyProductDetail
                 Description = product.Description ?? string.Empty,
                 Price = product.Price,
                 StockQuantity = product.StockQuantity,
-                IsApproved = product.IsApproved,
+                Status = product.Status,
                 CreatedAt = product.CreatedAt,
                 ImageUrls = product.Images.Select(i => i.ImageUrl).ToList(),
                 CategoryIds = product.ProductCategories.Select(pc => pc.CategoryId).ToList(),

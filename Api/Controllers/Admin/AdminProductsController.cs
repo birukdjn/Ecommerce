@@ -3,6 +3,7 @@ using Application.Features.Admins.Commands.ApproveProduct;
 using Application.Features.Admins.Commands.RejectProduct;
 using Application.Features.Admins.Queries.GetAdminProducts;
 using Domain.Common;
+using Domain.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -23,7 +24,7 @@ namespace Api.Controllers.Admin
         public async Task<ActionResult<PagedList<AdminProductDto>>> GetPending(
             [FromQuery] AdminProductSpecParams specParams)
         {
-            specParams.IsApproved = false;
+            specParams.ProductStatus = ProductStatus.Pending;
             specParams.IsDeleted = false;
 
             return HandleResult(await mediator.Send(new GetAdminProductsQuery(specParams)));

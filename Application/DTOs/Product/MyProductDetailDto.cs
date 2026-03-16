@@ -1,3 +1,5 @@
+using Domain.Enums;
+
 namespace Application.DTOs.Product
 {
 
@@ -8,7 +10,7 @@ namespace Application.DTOs.Product
         public string Description { get; set; } = string.Empty;
         public decimal Price { get; set; }
         public int StockQuantity { get; set; }
-        public bool IsApproved { get; set; }
+        public ProductStatus Status { get; set; }
         public DateTime CreatedAt { get; set; }
 
         // Detailed collections

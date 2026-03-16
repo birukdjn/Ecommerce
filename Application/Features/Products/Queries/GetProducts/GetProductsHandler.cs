@@ -2,6 +2,7 @@ using Application.DTOs.Product;
 using Application.Interfaces;
 using Domain.Common;
 using Domain.Entities;
+using Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -16,7 +17,7 @@ namespace Application.Features.Products.Queries.GetProducts
             var query = unitOfWork.Repository<Product>().Query()
                 .AsNoTracking()
                 .Include(p => p.Images)
-                .Where(p => p.IsApproved && !p.IsDeleted);
+                .Where(p => p.Status == ProductStatus.Approved);
 
             if (!string.IsNullOrEmpty(request.Params.Search))
                 query = query.Where(p => p.Name.ToLower().Contains(request.Params.Search.ToLower()));

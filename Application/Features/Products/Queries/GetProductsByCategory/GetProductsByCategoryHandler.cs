@@ -2,6 +2,7 @@ using Application.DTOs.Product;
 using Application.Interfaces;
 using Domain.Common;
 using Domain.Entities;
+using Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -22,7 +23,7 @@ namespace Application.Features.Products.Queries.GetProductsByCategory
                 .AsNoTracking()
                 .Include(p => p.Images)
                 .Include(p => p.Vendor)
-                .Where(p => p.IsApproved && !p.IsDeleted)
+                .Where(p => p.Status == ProductStatus.Approved)
                 .Where(p => p.ProductCategories.Any(pc => categoryIds.Contains(pc.CategoryId)));
 
             if (!string.IsNullOrWhiteSpace(request.Params.Search))

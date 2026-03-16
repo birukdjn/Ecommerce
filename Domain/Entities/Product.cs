@@ -1,5 +1,6 @@
 ﻿
 using Domain.Common;
+using Domain.Enums;
 
 namespace Domain.Entities
 {
@@ -11,7 +12,7 @@ namespace Domain.Entities
         public int StockQuantity { get; set; }
         public Guid VendorId { get; set; }
         public virtual Vendor Vendor { get; set; } = null!;
-        public bool IsApproved { get; set; } = false;
+        public ProductStatus Status { get; set; } = ProductStatus.Pending;
         public string? RejectionReason { get; set; }
 
         public virtual ICollection<ProductImage> Images { get; set; } = [];

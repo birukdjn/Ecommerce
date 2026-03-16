@@ -1,4 +1,5 @@
 using Application.Interfaces;
+using Application.Templates.Email;
 using Domain.Common;
 using Domain.Entities;
 using Domain.Enums;
@@ -9,7 +10,8 @@ namespace Application.Features.Products.Commands.CreateProduct
 {
     public class CreateProductHandler(
     IUnitOfWork unitOfWork,
-    ICurrentUserService currentUserService) : IRequestHandler<CreateProductCommand, Result<Guid>>
+    ICurrentUserService currentUserService,
+    IJobService jobService) : IRequestHandler<CreateProductCommand, Result<Guid>>
     {
         public async Task<Result<Guid>> Handle(CreateProductCommand command, CancellationToken cancellationToken)
         {
@@ -23,57 +25,25 @@ namespace Application.Features.Products.Commands.CreateProduct
             var vendorRepo = unitOfWork.Repository<Vendor>();
             var productRepo = unitOfWork.Repository<Product>();
             var productImageRepo = unitOfWork.Repository<ProductImage>();
-            var vendor = await vendorRepo.GetByIdAsync(vendorId.Value);
+            var vendor = await vendorRepo.Query()
+                .Include(v => v.User)
+                .FirstOrDefaultAsync(v => v.Id == vendorId.Value, cancellationToken);
 
             if (vendor == null || vendor.Status != VendorStatus.Active)
                 return Result<Guid>.Failure("Only approved vendors can create products.");
 
-            var name = command.Name.Trim();
+            var name = command.Name.Trim().ToLower();
             var description = command.Description?.Trim();
             var price = command.Price;
             var stockQuantity = command.StockQuantity;
 
             var existingProduct = await productRepo.Query()
-                .IgnoreQueryFilters()
-                .FirstOrDefaultAsync(p => p.Name == name && vendorId == p.VendorId, cancellationToken);
+                .FirstOrDefaultAsync(p => p.Name.ToLower() == name && vendorId == p.VendorId, cancellationToken);
 
             if (existingProduct != null)
             {
-                existingProduct.IsDeleted = false;
+                return Result<Guid>.Failure("Product Already Added");
 
-                bool priceChanged = existingProduct.Price != price;
-                bool descriptionChanged = existingProduct.Description != description;
-                bool stockChanged = existingProduct.StockQuantity != stockQuantity;
-
-                if (priceChanged)
-                {
-                    existingProduct.Price = price;
-                    existingProduct.IsApproved = false;
-                }
-
-                if (descriptionChanged && !priceChanged)
-                {
-                    existingProduct.Description = description;
-                }
-
-                if (stockChanged && !priceChanged && !descriptionChanged)
-                {
-                    existingProduct.StockQuantity = stockQuantity;
-                }
-
-                var deletedImages = await productImageRepo.Query()
-                    .IgnoreQueryFilters()
-                    .Where(i => i.ProductId == existingProduct.Id && i.IsDeleted)
-                    .ToListAsync(cancellationToken);
-
-                foreach (var img in deletedImages)
-                {
-                    img.IsDeleted = false;
-                }
-
-                productRepo.Update(existingProduct);
-                var updateResult = await unitOfWork.Complete();
-                return updateResult > 0 ? Result<Guid>.Success(existingProduct.Id) : Result<Guid>.Failure("Failed to update existing product.");
             }
 
             var product = new Product
@@ -84,7 +54,7 @@ namespace Application.Features.Products.Commands.CreateProduct
                 Price = price,
                 StockQuantity = stockQuantity,
                 VendorId = vendor.Id,
-                IsApproved = false,
+                Status = ProductStatus.Pending,
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -122,7 +92,27 @@ namespace Application.Features.Products.Commands.CreateProduct
 
             productRepo.Add(product);
             var result = await unitOfWork.Complete();
-            return result > 0 ? Result<Guid>.Success(product.Id) : Result<Guid>.Failure("Failed to save product.");
+
+            if (result > 0)
+            {
+                // Send Background Email to Vendor
+                if (vendor.User != null && !string.IsNullOrEmpty(vendor.User.Email))
+                {
+                    // We use the raw name from the command for the email to keep the original casing
+                    var displayProductName = command.Name.Trim();
+
+                    jobService.Enqueue<IEmailSender>(sender =>
+                        sender.SendEmailAsync(
+                            vendor.User.Email,
+                            $"Product Submitted: {displayProductName}",
+                            EmailTemplates.GetProductSubmittedEmail(vendor.User.FullName ?? vendor.StoreName, displayProductName)
+                        ));
+                }
+
+                return Result<Guid>.Success(product.Id);
+            }
+
+            return Result<Guid>.Failure("Failed to save product.");
         }
     }
 }

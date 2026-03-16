@@ -2,6 +2,7 @@ using Application.DTOs.Cart;
 using Application.Interfaces;
 using Domain.Common;
 using Domain.Entities;
+using Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -22,7 +23,7 @@ namespace Application.Features.Carts.Commands.ValidateCart
 
             foreach (var item in items)
             {
-                if (item.Product.IsDeleted || !item.Product.IsApproved)
+                if (item.Product.IsDeleted || !(item.Product.Status == ProductStatus.Approved))
                     errors.Add($"Product '{item.Product.Name}' is no longer available.");
 
                 else if (item.Product.StockQuantity < item.Quantity)

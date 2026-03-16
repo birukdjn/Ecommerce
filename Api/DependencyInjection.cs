@@ -1,4 +1,5 @@
-﻿using Api.Middleware;
+﻿using System.Text.Json;
+using Api.Middleware;
 using Domain.Constants;
 using Hangfire;
 using Microsoft.OpenApi;
@@ -46,7 +47,15 @@ namespace Api
                 });
             });
 
-            services.AddControllers();
+            services.AddControllers()
+                .AddJsonOptions(options =>
+                {
+                    // This makes all Enums (ProductStatus, PaymentStatus, etc.) display as strings
+                    options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+
+                    // Optional: If you want CamelCase for the enum strings (e.g., "pending" vs "Pending")
+                    options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+                });
             return services;
 
 

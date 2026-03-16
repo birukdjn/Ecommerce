@@ -4,6 +4,7 @@ using Domain.Entities;
 using MediatR;
 using Application.Templates.Email;
 using Microsoft.EntityFrameworkCore;
+using Domain.Enums;
 
 namespace Application.Features.Admins.Commands.RejectProduct
 {
@@ -22,7 +23,10 @@ namespace Application.Features.Admins.Commands.RejectProduct
             var product = await productRepo.GetByIdAsync(command.ProductId);
             if (product == null) return Result<Unit>.Failure("Product not found");
 
-            product.IsApproved = false;
+            if (product.Status == ProductStatus.Rejected)
+                return Result<Unit>.Failure("Product Already Rejected");
+
+            product.Status = ProductStatus.Rejected;
             product.RejectionReason = command.Reason;
 
             productRepo.Update(product);

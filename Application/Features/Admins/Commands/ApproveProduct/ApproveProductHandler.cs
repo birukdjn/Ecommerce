@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Domain.Common;
 using Domain.Entities;
 using MediatR;
+using Domain.Enums;
 
 namespace Application.Features.Admins.Commands.ApproveProduct;
 
@@ -24,7 +25,10 @@ public class ApproveProductHandler(
         if (product == null)
             return Result<Unit>.Failure("Product not found");
 
-        product.IsApproved = true;
+        if (product.Status == ProductStatus.Approved)
+            return Result<Unit>.Failure("Product Already Approved");
+
+        product.Status = ProductStatus.Approved;
 
         productRepo.Update(product);
         await unitOfWork.Complete();

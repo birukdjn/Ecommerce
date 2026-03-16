@@ -2,6 +2,7 @@ using Application.DTOs.Admin;
 using Application.Interfaces;
 using Domain.Common;
 using Domain.Entities;
+using Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -24,8 +25,9 @@ namespace Application.Features.Admins.Queries.GetAdminProducts
                 .ThenInclude(pc => pc.Category)
                 .AsNoTracking();
 
-            if (request.Params.IsApproved.HasValue)
-                query = query.Where(p => p.IsApproved == request.Params.IsApproved.Value);
+            if (request.Params.ProductStatus.HasValue)
+                query = query.Where(p => p.Status == request.Params.ProductStatus.Value);
+
 
             if (request.Params.IsDeleted.HasValue)
                 query = query.Where(p => p.IsDeleted == request.Params.IsDeleted.Value);
@@ -52,7 +54,7 @@ namespace Application.Features.Admins.Queries.GetAdminProducts
                     Description = p.Description,
                     VendorStoreName = p.Vendor.StoreName,
                     Price = p.Price,
-                    IsApproved = p.IsApproved,
+                    Status = p.Status,
                     IsDeleted = p.IsDeleted,
                     CreatedAt = p.CreatedAt,
                     Categories = p.ProductCategories

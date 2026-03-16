@@ -92,5 +92,22 @@ public static string GetProductRejectedEmail(string vendorName, string productNa
             If you have questions, please reply to this email.
         </div>
     </div>";
+
+    // 8. Product Submission Confirmation
+public static string GetProductSubmittedEmail(string vendorName, string productName) => $@"
+    <div style='{ContainerStyle}'>
+        <h2 style='color: {PrimaryColor};'>Product Received!</h2>
+        <p>Hello {vendorName},</p>
+        <p>Your product <strong>{productName}</strong> has been successfully added to your catalog.</p>
+        <div style='background-color: #e7f3ff; border-left: 4px solid {PrimaryColor}; padding: 15px; margin: 20px 0;'>
+            <strong>Status: Pending Approval</strong><br/>
+            Our administrators will review the details shortly. You will receive another notification once it is live on the store.
+        </div>
+        <p>In the meantime, you can continue managing your other products from your dashboard.</p>
+        <div style='{FooterStyle}'>
+            Thank you for selling with us!
+        </div>
+    </div>";
+
     }
 }
