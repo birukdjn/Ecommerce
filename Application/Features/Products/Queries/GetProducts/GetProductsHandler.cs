@@ -43,7 +43,8 @@ namespace Application.Features.Products.Queries.GetProducts
                                        ImageUrl = p.Images.FirstOrDefault(i => i.IsPrimary) != null
                                                 ? p.Images.FirstOrDefault(i => i.IsPrimary)!.ImageUrl
                                                 : p.Images.FirstOrDefault() != null ? p.Images.FirstOrDefault()!.ImageUrl
-                                                : null
+                                                : null,
+                                       Vendor = p.Vendor.StoreName
                                    })
                                                     .ToListAsync(cancellationToken);
 

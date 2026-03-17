@@ -26,7 +26,7 @@ namespace Application.Features.Products.Queries.GetTrendingProducts
                     Id = p.Id,
                     Name = p.Name,
                     Price = p.Price,
-                    VendorName = p.Vendor != null ? p.Vendor.StoreName : "Unknown Store",
+                    Vendor = p.Vendor != null ? p.Vendor.StoreName : "Unknown Store",
                     ImageUrl = p.Images
                         .Where(i => i.IsPrimary)
                         .Select(i => i.ImageUrl)

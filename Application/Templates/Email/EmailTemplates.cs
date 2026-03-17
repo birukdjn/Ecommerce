@@ -109,5 +109,20 @@ public static string GetProductSubmittedEmail(string vendorName, string productN
         </div>
     </div>";
 
+    // 9. Low Stock Alert
+public static string GetLowStockEmail(string vendorName, string productName, int currentStock) => $@"
+    <div style='{ContainerStyle}'>
+        <h2 style='color: #e67e22;'>Low Stock Warning</h2>
+        <p>Hello {vendorName},</p>
+        <p>This is an automated alert to inform you that your inventory for <strong>{productName}</strong> is running low.</p>
+        <div style='background-color: #fff4e5; border: 1px solid #e67e22; padding: 15px; text-align: center; border-radius: 4px;'>
+            <span style='font-size: 18px;'>Current Stock: <strong>{currentStock}</strong></span>
+        </div>
+        <p>To avoid losing potential sales, please restock this item as soon as possible.</p>
+        <div style='{FooterStyle}'>
+            You can update your stock levels in the Vendor Portal.
+        </div>
+    </div>";
+
     }
 }

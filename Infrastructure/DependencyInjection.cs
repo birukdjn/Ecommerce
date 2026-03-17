@@ -47,6 +47,7 @@ namespace Infrastructure
 
             services.AddScoped<IFileService, FileService>();
             services.AddTransient<IEmailSender, EmailSender>();
+            services.AddScoped<IInventoryNotificationService, InventoryNotificationService>();
             services.AddScoped<ISmsSender, SmsSender>();
             services.AddScoped<IJobService, HangfireJobService>();
 

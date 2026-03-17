@@ -1,5 +1,6 @@
 ﻿using System.Text.Json;
 using Api.Middleware;
+using Application.Interfaces;
 using Domain.Constants;
 using Hangfire;
 using Microsoft.OpenApi;
@@ -50,10 +51,8 @@ namespace Api
             services.AddControllers()
                 .AddJsonOptions(options =>
                 {
-                    // This makes all Enums (ProductStatus, PaymentStatus, etc.) display as strings
                     options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
 
-                    // Optional: If you want CamelCase for the enum strings (e.g., "pending" vs "Pending")
                     options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
                 });
             return services;
@@ -84,6 +83,16 @@ namespace Api
 
 
             app.UseHangfireDashboard("/hangfire");
+            using (var scope = app.Services.CreateScope())
+            {
+                var recurringJobManager = scope.ServiceProvider.GetRequiredService<IRecurringJobManager>();
+
+                recurringJobManager.AddOrUpdate<IInventoryNotificationService>(
+                    "low-stock-check",
+                    service => service.CheckLowStockAndNotifyVendors(),
+                    Cron.Daily(8)
+               );
+            }
 
             app.UseHttpsRedirection();
             app.UseAuthentication();

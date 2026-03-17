@@ -57,7 +57,7 @@ namespace Application.Features.Products.Queries.GetProductsByCategory
                         .Where(i => i.IsPrimary)
                         .Select(i => i.ImageUrl)
                         .FirstOrDefault(),
-                    VendorName = p.Vendor != null ? p.Vendor.StoreName : "Unknown Vendor"
+                    Vendor = p.Vendor != null ? p.Vendor.StoreName : "Unknown Vendor"
                 })
                 .ToListAsync(ct);
 

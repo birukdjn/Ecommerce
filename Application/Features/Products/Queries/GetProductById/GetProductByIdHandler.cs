@@ -28,7 +28,7 @@ namespace Application.Features.Products.Queries.GetProductById
                 Price = product.Price,
                 ImageUrl = product.Images.FirstOrDefault(i => i.IsPrimary)?.ImageUrl
                            ?? product.Images.FirstOrDefault()?.ImageUrl,
-                VendorName = product.Vendor?.StoreName ?? "Unknown Vendor"
+                Vendor = product.Vendor?.StoreName ?? "Unknown Vendor"
             };
 
             return Result<ProductDto>.Success(dto);

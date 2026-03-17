@@ -10,7 +10,7 @@ public class AddToCartHandler(
     IUnitOfWork unitOfWork,
     ICurrentUserService currentUserService) : IRequestHandler<AddToCartCommand, Result<Guid>>
 {
-    public async Task<Result<Guid>> Handle(AddToCartCommand request, CancellationToken cancellationToken)
+    public async Task<Result<Guid>> Handle(AddToCartCommand command, CancellationToken cancellationToken)
     {
         var userId = currentUserService.GetCurrentUserId();
         if (userId == null || userId == Guid.Empty)
@@ -28,20 +28,23 @@ public class AddToCartHandler(
 
         }
 
-        var product = await unitOfWork.Repository<Product>().GetByIdAsync(request.ProductId);
+        var product = await unitOfWork.Repository<Product>().GetByIdAsync(command.ProductId);
         if (product == null) return Result<Guid>.Failure("Product not found.");
 
-        if (product.StockQuantity < request.Quantity)
+        if (command.Quantity <= 0)
+            return Result<Guid>.Failure("Quantity must be at least 1.");
+
+        if (product.StockQuantity < command.Quantity)
             return Result<Guid>.Failure($"Insufficient stock. Only {product.StockQuantity} available.");
 
-        var existingItem = cart.Items.FirstOrDefault(x => x.ProductId == request.ProductId);
+        var existingItem = cart.Items.FirstOrDefault(x => x.ProductId == command.ProductId);
 
         if (existingItem != null)
         {
-            if (product.StockQuantity < (existingItem.Quantity + request.Quantity))
+            if (product.StockQuantity < (existingItem.Quantity + command.Quantity))
                 return Result<Guid>.Failure("Total quantity in cart exceeds available stock.");
 
-            existingItem.Quantity += request.Quantity;
+            existingItem.Quantity += command.Quantity;
             existingItem.UnitPrice = product.Price;
             unitOfWork.Repository<CartItem>().Update(existingItem);
         }
@@ -50,8 +53,8 @@ public class AddToCartHandler(
             var newItem = new CartItem
             {
                 CartId = cart.Id,
-                ProductId = request.ProductId,
-                Quantity = request.Quantity,
+                ProductId = command.ProductId,
+                Quantity = command.Quantity,
                 UnitPrice = product.Price
             };
             unitOfWork.Repository<CartItem>().Add(newItem);
