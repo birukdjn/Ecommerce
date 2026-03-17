@@ -6,8 +6,7 @@ namespace Application.Features.Users.Commands.Identity
     (
         [Phone]
         string PhoneNumber,
-        string Code,
-        string VerificationId
+        string Code
     );
 
 }

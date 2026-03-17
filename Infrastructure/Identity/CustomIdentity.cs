@@ -48,9 +48,6 @@ public static class IdentityApiEndpointRouteBuilderExtensions
             ([FromBody] RegisterCommand command, HttpContext context, [FromServices] IServiceProvider serviceProvider) =>
         {
             var userManager = serviceProvider.GetRequiredService<UserManager<TUser>>();
-            var smsSender = serviceProvider.GetRequiredService<ISmsSender>();
-
-
 
             if (!userManager.SupportsUserEmail)
             {
@@ -109,17 +106,12 @@ public static class IdentityApiEndpointRouteBuilderExtensions
 
             if (!string.IsNullOrEmpty(addedPhoneNumber))
             {
-                var smsResult = await smsSender.SendSmsChallengeAsync(addedPhoneNumber);
-                if (smsResult.IsSuccess)
-                {
-
-                    return TypedResults.Ok(smsResult.Value);
-                }
-                return CreateValidationProblem("SmsError", smsResult.Error ?? "Failed to send verification SMS.");
+                var jobService = serviceProvider.GetRequiredService<IJobService>();
+                jobService.Enqueue<ISmsSender>(sms => sms.SendOtpAsync(addedPhoneNumber, "Your Ecommerce App Code: "));
 
             }
             return TypedResults.Ok(string.Empty);
-        });
+        }).RequireRateLimiting("SmsPolicy");
 
         // POST: /login
         routeGroup.MapPost("/login", async Task<Results<SignInHttpResult, ProblemHttpResult>>
@@ -220,10 +212,9 @@ public static class IdentityApiEndpointRouteBuilderExtensions
             var smsSender = serviceProvider.GetRequiredService<ISmsSender>();
             var phone = command.PhoneNumber;
             var code = command.Code;
-            var verificationId = command.VerificationId;
 
             // 1. Verify code with AfroSms
-            var verificationResult = await smsSender.VerifyCodeAsync(phone, code, verificationId);
+            var verificationResult = await smsSender.VerifyOtpAsync(phone, code);
 
             if (!verificationResult.IsSuccess)
             {
@@ -243,12 +234,16 @@ public static class IdentityApiEndpointRouteBuilderExtensions
             if (identityResult.Succeeded && user is ApplicationUser customUser)
             {
                 var jobService = serviceProvider.GetRequiredService<IJobService>();
-                jobService.Enqueue<ISmsSender>(sms => sms.SendSmsAsync(phone, "Welcome to our platform! Your account is now active."));
 
-                jobService.Enqueue<IEmailSender>(email => email.SendEmailAsync(
-                    customUser.Email!,
-                    "Welcome to the Platform!",
-                    EmailTemplates.GetWelcomeEmail(customUser.FullName)));
+                jobService.Enqueue<ISmsSender>(sms => sms.SendSmsAsync(phone, $"Welcome to our platform!{customUser.FullName}! Your account is now active."));
+
+                if (!string.IsNullOrEmpty(customUser.Email))
+                {
+                    jobService.Enqueue<IEmailSender>(email => email.SendEmailAsync(
+                        customUser.Email!,
+                        "Welcome to the Platform!",
+                        EmailTemplates.GetWelcomeEmail(customUser.FullName!)));
+                }
 
                 customUser.IsActive = true;
                 await userManager.UpdateAsync(user);
@@ -258,7 +253,7 @@ public static class IdentityApiEndpointRouteBuilderExtensions
             return identityResult.Succeeded
                 ? TypedResults.Ok()
                 : CreateValidationProblem(identityResult);
-        });
+        }).RequireRateLimiting("SmsPolicy");
 
 
         // POST: /forgotPassword
@@ -277,7 +272,7 @@ public static class IdentityApiEndpointRouteBuilderExtensions
             {
                 var code = await userManager.GenerateTwoFactorTokenAsync(user, "Phone");
 
-                jobService.Enqueue<ISmsSender>(sms => sms.SendSmsAsync(phone, $"Your password reset code is: {code}"));
+                jobService.Enqueue<ISmsSender>(sms => sms.SendOtpAsync(phone, $"Your password reset code is: {code}"));
 
             }
 
@@ -285,7 +280,7 @@ public static class IdentityApiEndpointRouteBuilderExtensions
             {
                 Message = "If an account is associated with this phone number, a reset code has been sent."
             });
-        });
+        }).RequireRateLimiting("SmsPolicy");
 
         // POST: /resetPassword
         routeGroup.MapPost("/reset-password", async Task<Results<Ok<object>, ValidationProblem>>

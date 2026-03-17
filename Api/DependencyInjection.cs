@@ -4,6 +4,8 @@ using Application.Interfaces;
 using Domain.Constants;
 using Hangfire;
 using Microsoft.OpenApi;
+using System.Threading.RateLimiting;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Api
 {
@@ -48,6 +50,26 @@ namespace Api
                 });
             });
 
+
+
+
+            services.AddRateLimiter(options =>
+            {
+                options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+                // Policy specifically for SMS/OTP endpoints
+                options.AddPolicy("SmsPolicy", httpContext =>
+                {
+                    var identity = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+                    return RateLimitPartition.GetFixedWindowLimiter(identity, _ => new FixedWindowRateLimiterOptions
+                    {
+                        PermitLimit = 3,
+                        Window = TimeSpan.FromMinutes(10),
+                        QueueLimit = 0
+                    });
+                });
+            });
+
             services.AddControllers()
                 .AddJsonOptions(options =>
                 {
@@ -65,6 +87,7 @@ namespace Api
         {
 
             app.UseExceptionHandler();
+            app.UseHttpsRedirection();
 
 
             if (app.Environment.IsDevelopment())
@@ -94,7 +117,7 @@ namespace Api
                );
             }
 
-            app.UseHttpsRedirection();
+            app.UseRateLimiter();
             app.UseAuthentication();
             app.UseAuthorization();
             return app;

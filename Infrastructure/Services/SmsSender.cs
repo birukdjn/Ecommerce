@@ -33,15 +33,22 @@ namespace Infrastructure.Services
             return response.IsSuccessStatusCode;
         }
 
-        public async Task<Result<string>> SendSmsChallengeAsync(string to, string prefix = "Verification Code: ")
+        public async Task<Result<string>> SendOtpAsync(string Phone, string prefix = "Verification Code: ")
         {
 
 
-            to = NormalizedPhone(to);
+            Phone = NormalizedPhone(Phone);
             var client = httpClientFactory.CreateClient("AfroSms");
             client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _settings.Token);
 
-            var url = $"api/challenge?from={_settings.IdentifierId}&sender={_settings.SenderName}&to={to}&pr={Uri.EscapeDataString(prefix)}&ttl=300&len=6&t=0";
+            var url =
+                $"api/challenge" +
+                $"?from={_settings.IdentifierId}" +
+                $"&sender={_settings.SenderName}" +
+                $"&to={Phone}" +
+                $"&pr={Uri.EscapeDataString(prefix)}" +
+                $"&ttl=300&len=6&t=0";
+
             try
             {
                 var response = await client.GetAsync(url);
@@ -50,13 +57,13 @@ namespace Infrastructure.Services
 
                 var content = await response.Content.ReadAsStringAsync();
                 using var doc = JsonDocument.Parse(content);
-                var ack = doc.RootElement.GetProperty("acknowledge").GetString();
 
-                if (ack == "success")
+                if (doc.RootElement.TryGetProperty("acknowledge", out var ackElement) &&
+                    ackElement.GetString() == "success")
                 {
-                    var vId = doc.RootElement.GetProperty("response").GetProperty("verificationId").GetString();
-                    return Result<string>.Success(vId!);
+                    return Result<string>.Success("OTP Sent Successfully");
                 }
+
                 return Result<string>.Failure("Failed to initiate SMS challenge.");
             }
             catch (Exception ex)
@@ -65,14 +72,14 @@ namespace Infrastructure.Services
             }
         }
 
-        public async Task<Result> VerifyCodeAsync(string to, string code, string verificationId)
+        public async Task<Result> VerifyOtpAsync(string Phone, string code)
         {
-            to = NormalizedPhone(to);
+            Phone = NormalizedPhone(Phone);
             var client = httpClientFactory.CreateClient("AfroSms");
             client.DefaultRequestHeaders.Authorization =
                 new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _settings.Token);
 
-            var url = $"api/verify?to={to}&vc={verificationId}&code={code}";
+            var url = $"api/verify?to={Phone}&code={code}";
 
             var response = await client.GetAsync(url);
             if (!response.IsSuccessStatusCode) return Result.Failure("Network error during verification.");

@@ -51,10 +51,12 @@ namespace Infrastructure
             services.AddScoped<ISmsSender, SmsSender>();
             services.AddScoped<IJobService, HangfireJobService>();
 
-            services.AddHttpClient("AfroSms", client =>
-            {
-                client.BaseAddress = new Uri("https://api.afromessage.com/");
-            });
+            services.AddHttpClient("AfroSms", (sp, client) =>
+                {
+                    var options = sp.GetRequiredService<IOptions<AfroSmsOptions>>().Value;
+
+                    client.BaseAddress = new Uri(options.BaseUrl);
+                });
 
             services.AddScoped<ICurrentUserService, CurrentUserService>();
 
