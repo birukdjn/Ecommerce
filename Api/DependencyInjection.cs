@@ -6,6 +6,7 @@ using Hangfire;
 using Microsoft.OpenApi;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.RateLimiting;
+using Api.Filters;
 
 namespace Api
 {
@@ -105,7 +106,8 @@ namespace Api
             }
 
 
-            app.UseHangfireDashboard("/hangfire");
+
+
             using (var scope = app.Services.CreateScope())
             {
                 var recurringJobManager = scope.ServiceProvider.GetRequiredService<IRecurringJobManager>();
@@ -120,6 +122,13 @@ namespace Api
             app.UseRateLimiter();
             app.UseAuthentication();
             app.UseAuthorization();
+            app.UseHangfireDashboard("/hangfire", new DashboardOptions
+            {
+                Authorization = new[]
+                   {
+                        new HangfireAuthorizationFilter("AdminOnly")
+                    }
+            });
             return app;
         }
     }
