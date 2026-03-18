@@ -110,9 +110,9 @@ namespace Api
 
             using (var scope = app.Services.CreateScope())
             {
-                var recurringJobManager = scope.ServiceProvider.GetRequiredService<IRecurringJobManager>();
+                var jobService = scope.ServiceProvider.GetRequiredService<IJobService>();
 
-                recurringJobManager.AddOrUpdate<IInventoryNotificationService>(
+                jobService.AddOrUpdateRecurring<IInventoryNotificationService>(
                     "low-stock-check",
                     service => service.CheckLowStockAndNotifyVendors(),
                     Cron.Daily(8)
