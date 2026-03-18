@@ -105,8 +105,16 @@ namespace Api
                 });
             }
 
-
-
+            app.UseRateLimiter();
+            app.UseAuthentication();
+            app.UseAuthorization();
+            app.UseHangfireDashboard("/hangfire", new DashboardOptions
+            {
+                Authorization = new[]
+                   {
+                        new HangfireAuthorizationFilter("AdminOnly")
+                    }
+            });
 
             using (var scope = app.Services.CreateScope())
             {
@@ -118,17 +126,6 @@ namespace Api
                     Cron.Daily(8)
                );
             }
-
-            app.UseRateLimiter();
-            app.UseAuthentication();
-            app.UseAuthorization();
-            app.UseHangfireDashboard("/hangfire", new DashboardOptions
-            {
-                Authorization = new[]
-                   {
-                        new HangfireAuthorizationFilter("AdminOnly")
-                    }
-            });
             return app;
         }
     }

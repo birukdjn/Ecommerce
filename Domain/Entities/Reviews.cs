@@ -15,6 +15,6 @@ namespace Domain.Entities
         [Range(1, 5)]
         public int Rating { get; set; }
         public string? Comment { get; set; }
-        public bool IsApproved { get; set; } = false;
+        public bool IsApproved { get; set; } = true;
     }
 }
