@@ -16,6 +16,16 @@ namespace Application.Templates.Email
                     If you didn't sign up for this account, please ignore this email.
                 </div>
             </div>";
+            
+             public static string GetRegistrationEmail(string name) => $@"
+            <div style='{ContainerStyle}'>
+                <h2 style='color: {PrimaryColor};'>Welcome, {name}!</h2>
+                <p>Thank you for joining our platform. Your account is not active.</p>
+                <p>please check you phone's inbox and verify your account!</p>
+                <div style='{FooterStyle}'>
+                    If you didn't sign up for this account, please don't share your phone sms message.
+                </div>
+            </div>";
 
         // 2. Password Reset Code
         public static string GetPasswordResetEmail(string name, string code) => $@"

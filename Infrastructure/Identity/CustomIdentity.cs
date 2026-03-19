@@ -48,6 +48,7 @@ public static class IdentityApiEndpointRouteBuilderExtensions
             ([FromBody] RegisterCommand command, HttpContext context, [FromServices] IServiceProvider serviceProvider) =>
         {
             var userManager = serviceProvider.GetRequiredService<UserManager<TUser>>();
+            var jobService = serviceProvider.GetRequiredService<IJobService>();
 
             if (!userManager.SupportsUserEmail)
             {
@@ -85,11 +86,14 @@ public static class IdentityApiEndpointRouteBuilderExtensions
             await userStore.SetUserNameAsync(user, email, CancellationToken.None);
             await emailStore.SetEmailAsync(user, email, CancellationToken.None);
 
-            if (user is ApplicationUser customUser)
+            ApplicationUser? customUser = user as ApplicationUser;
+
+            if (customUser != null)
             {
                 customUser.FullName = fullName;
                 customUser.ProfilePictureUrl = profilePicture;
             }
+
             await userManager.SetPhoneNumberAsync(user, phone);
             var result = await userManager.CreateAsync(user, password);
 
@@ -100,13 +104,15 @@ public static class IdentityApiEndpointRouteBuilderExtensions
 
             await userManager.AddToRoleAsync(user, Roles.Customer);
 
-            // await SendConfirmationEmailAsync(user, userManager, context, email);
+            jobService.Enqueue<IEmailSender>(email => email.SendEmailAsync(
+                        customUser.Email!,
+                        "Welcome to the Platform!",
+                        EmailTemplates.GetRegistrationEmail(customUser.FullName!)));
 
             var addedPhoneNumber = await userManager.GetPhoneNumberAsync(user);
 
             if (!string.IsNullOrEmpty(addedPhoneNumber))
             {
-                var jobService = serviceProvider.GetRequiredService<IJobService>();
                 jobService.Enqueue<ISmsSender>(sms => sms.SendOtpAsync(addedPhoneNumber, "Your Ecommerce App Code: "));
 
             }
