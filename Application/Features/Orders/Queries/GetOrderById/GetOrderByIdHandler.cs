@@ -41,6 +41,7 @@ public class GetOrderByIdHandler(IUnitOfWork unitOfWork, ICurrentUserService cur
                 order.ShippingFullName,
                 order.ShippingPhoneNumber,
                 order.ShippingCountry,
+                order.ShippingRegion,
                 order.ShippingCity,
                 order.ShippingSpecialPlaceName
             ),

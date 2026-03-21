@@ -4,6 +4,7 @@ namespace Application.DTOs.Address
         string FullName,
         string Phone,
         string Country,
+        string Region,
         string City,
         string SpecialPlaceName
     );
