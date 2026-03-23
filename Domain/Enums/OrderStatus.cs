@@ -4,7 +4,11 @@ namespace Domain.Enums
     public enum OrderStatus
     {
         pending,
-        paid,
+        Processing, 
+        Shipped,
         Delivered,
+        Cancelled,
+
+
     }
 }
