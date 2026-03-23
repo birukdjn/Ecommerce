@@ -2,6 +2,7 @@
 using Application.Interfaces;
 using Domain.Common;
 using Domain.Entities;
+using Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -21,8 +22,8 @@ namespace Application.Features.Admins.Queries.GetVendorRequests
 
             var requests = await vendorRepo.Query()
             .AsNoTracking()
-            .IgnoreQueryFilters()
             .Include(v => v.User)
+            .Where(v => v.Status == VendorStatus.Pending)
             .OrderByDescending(v => v.CreatedAt)
             .Select(v => new VendorRequestDetailsDto(
                 v.Id,
