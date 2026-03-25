@@ -190,6 +190,24 @@ public static class IdentityApiEndpointRouteBuilderExtensions
             return TypedResults.SignIn(principal, authenticationScheme: IdentityConstants.BearerScheme);
         });
 
+        // GET: /me
+        routeGroup.MapGet("/me", (ClaimsPrincipal user) =>
+        {
+            var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var email = user.FindFirst(ClaimTypes.Email)?.Value;
+            var roles = user.FindAll(ClaimTypes.Role)
+                            .Select(r => r.Value)
+                            .ToList();
+
+            return Results.Ok(new
+            {
+                userId,
+                email,
+                roles
+            });
+        })
+        .RequireAuthorization();
+
         // POST: /refresh
         routeGroup.MapPost("/refresh", async Task<Results<Ok<AccessTokenResponse>, UnauthorizedHttpResult, SignInHttpResult, ChallengeHttpResult>>
             ([FromBody] RefreshRequest refreshRequest, [FromServices] IServiceProvider sp) =>

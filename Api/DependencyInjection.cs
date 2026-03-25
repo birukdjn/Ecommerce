@@ -1,4 +1,4 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using Api.Middleware;
 using Application.Interfaces;
 using Domain.Constants;
@@ -16,6 +16,7 @@ namespace Api
         {
             services.AddExceptionHandler<GlobalExceptionHandler>();
             services.AddProblemDetails();
+            services.AddSingleton(TimeProvider.System);
 
             services.AddAuthentication().AddBearerToken();
             services.AddAuthorizationBuilder()
@@ -78,6 +79,15 @@ namespace Api
 
                     options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
                 });
+
+            services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAll", builder =>
+                    builder.AllowAnyOrigin()
+                           .AllowAnyMethod()
+                           .AllowAnyHeader());
+            });
+
             return services;
 
 
@@ -105,6 +115,7 @@ namespace Api
                 });
             }
 
+            app.UseCors("AllowAll");
             app.UseRateLimiter();
             app.UseAuthentication();
             app.UseAuthorization();
