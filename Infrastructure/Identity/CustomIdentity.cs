@@ -105,7 +105,7 @@ public static class IdentityApiEndpointRouteBuilderExtensions
             await userManager.AddToRoleAsync(user, Roles.Customer);
 
             jobService.Enqueue<IEmailSender>(email => email.SendEmailAsync(
-                        customUser.Email!,
+                        customUser!.Email!,
                         "Welcome to the Platform!",
                         EmailTemplates.GetRegistrationEmail(customUser.FullName!)));
 
@@ -190,21 +190,38 @@ public static class IdentityApiEndpointRouteBuilderExtensions
             return TypedResults.SignIn(principal, authenticationScheme: IdentityConstants.BearerScheme);
         });
 
-        // GET: /me
-        routeGroup.MapGet("/me", (ClaimsPrincipal user) =>
+        // // GET: /me
+        routeGroup.MapGet("/me", async (ClaimsPrincipal user, IApplicationDbContext context) =>
         {
-            var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            var email = user.FindFirst(ClaimTypes.Email)?.Value;
+            var userIdString = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdString)) return Results.Unauthorized();
+
+            Guid userId;
+            if (!Guid.TryParse(userIdString, out userId))
+                return Results.BadRequest("Invalid user ID format.");
+
+
             var roles = user.FindAll(ClaimTypes.Role)
                             .Select(r => r.Value)
                             .ToList();
 
-            return Results.Ok(new
+            var appUser = await context.Users
+            .Where(u => u.Id == userId)
+            .Select(u => new
             {
                 userId,
-                email,
+                u.FullName,
+                u.UserName,
+                u.Email,
+                u.PhoneNumber,
+                u.ProfilePictureUrl,
+                totalOrder = u.Orders.Count,
                 roles
-            });
+
+            }).FirstOrDefaultAsync();
+
+            if (appUser == null) return Results.NotFound();
+            return Results.Ok(appUser);
         })
         .RequireAuthorization();
 

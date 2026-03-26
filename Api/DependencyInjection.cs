@@ -5,7 +5,6 @@ using Domain.Constants;
 using Hangfire;
 using Microsoft.OpenApi;
 using System.Threading.RateLimiting;
-using Microsoft.AspNetCore.RateLimiting;
 using Api.Filters;
 
 namespace Api
