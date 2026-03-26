@@ -16,21 +16,30 @@ namespace Application.Features.Products.Queries.GetTrendingProducts
         {
             var products = await unitOfWork.Repository<Product>().Query()
                 .AsNoTracking()
-                .Include(p => p.Images)
-                .Include(p => p.Vendor)
                 .Where(p => p.Status == ProductStatus.Approved && p.StockQuantity > 0)
-                .OrderByDescending(p => p.CreatedAt)
+                .Select(p => new
+                {
+                    Product = p,
+                    AvgRating = p.Reviews.Any() ? p.Reviews.Average(r => r.Rating) : 0,
+                    ReviewCount = p.Reviews.Count()
+                })
+                .OrderByDescending(p => p.AvgRating)
+                .ThenByDescending(p => p.ReviewCount)
+                .ThenByDescending(p => p.Product.CreatedAt)
                 .Take(10)
                 .Select(p => new ProductDto
                 {
-                    Id = p.Id,
-                    Name = p.Name,
-                    Price = p.Price,
-                    Vendor = p.Vendor != null ? p.Vendor.StoreName : "Unknown Store",
-                    ImageUrl = p.Images
+                    Id = p.Product.Id,
+                    Name = p.Product.Name,
+                    Price = p.Product.Price,
+                    Vendor = p.Product.Vendor != null
+                        ? p.Product.Vendor.StoreName
+                        : "Unknown Store",
+                    ImageUrl = p.Product.Images
                         .Where(i => i.IsPrimary)
                         .Select(i => i.ImageUrl)
-                        .FirstOrDefault() ?? (p.Images.Any() ? p.Images.First().ImageUrl : null)
+                        .FirstOrDefault()
+                        ?? p.Product.Images.Select(i => i.ImageUrl).FirstOrDefault()
                 })
                 .ToListAsync(ct);
 

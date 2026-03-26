@@ -48,7 +48,7 @@ namespace Application.Features.Products.Queries.GetMyProducts
                     Id = p.Id,
                     Name = p.Name,
                     Price = p.Price,
-                    Description = p.Description ?? string.Empty,
+                    Status = p.Status,
                     StockQuantity = p.StockQuantity,
                     ImageUrl = p.Images.FirstOrDefault(i => i.IsPrimary) != null
                                ? p.Images.FirstOrDefault(i => i.IsPrimary)!.ImageUrl
