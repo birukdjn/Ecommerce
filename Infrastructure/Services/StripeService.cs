@@ -43,8 +43,8 @@ namespace Infrastructure.Services
 
                 Mode = "payment",
 
-                SuccessUrl = "https://yourfrontend.com/success?session_id={CHECKOUT_SESSION_ID}",
-                CancelUrl = "https://yourfrontend.com/cancel"
+                SuccessUrl = "http://localhost:3000/payment/success?session_id={CHECKOUT_SESSION_ID}",
+                CancelUrl = "http://localhost:3000/payment/cancel"
             };
 
             var service = new SessionService();
