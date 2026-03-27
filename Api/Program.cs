@@ -11,6 +11,11 @@ public partial class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
+        builder.Configuration
+        .AddJsonFile("appsettings.json", optional: false)
+        .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true)
+        .AddJsonFile("appsettings.Local.json", optional: true);
+
         builder.Services
             .AddApiServices()
             .AddApplicationServices()

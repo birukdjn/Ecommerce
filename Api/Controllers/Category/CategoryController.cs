@@ -24,7 +24,7 @@ namespace Api.Controllers.Category
 
         [HttpGet("tree")]
         [AllowAnonymous]
-        public async Task<ActionResult<List<CategoryDto>>> GetCategoryTree()
+        public async Task<ActionResult<List<CategoryTreeDto>>> GetCategoryTree()
             => HandleResult(await mediator.Send(new GetCategoryTreeQuery()));
 
         [HttpGet("{id}")]

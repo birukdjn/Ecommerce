@@ -5,7 +5,7 @@ namespace Domain.Entities
 {
     public class PaymentTransaction : TransactionEntity
     {
-        public virtual Order Order { get; set; } = null!;
+        public Guid OrderId { get; set; }
         public required string TransactionId { get; set; }
         public decimal Amount { get; set; }
         public PaymentStatus Status { get; set; } = PaymentStatus.Pending;

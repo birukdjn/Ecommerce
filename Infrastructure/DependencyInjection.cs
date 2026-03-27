@@ -13,6 +13,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Stripe;
 
 namespace Infrastructure
 {
@@ -25,8 +26,10 @@ namespace Infrastructure
             var smsSection = configuration.GetSection(AfroSmsOptions.SectionName);
             var emailSection = configuration.GetSection(EmailOptions.SectionName);
             var connectionString = databaseSection["ConnectionString"];
+            StripeConfiguration.ApiKey = configuration["Stripe:SecretKey"];
 
             services.Configure<EmailOptions>(configuration.GetSection(EmailOptions.SectionName));
+            services.Configure<StripeOptions>(configuration.GetSection("Stripe"));
 
             // 1. Register Hangfire with Postgres
             services.AddHangfire(config => config
@@ -44,8 +47,7 @@ namespace Infrastructure
             services.AddHangfireServer();
 
 
-
-            services.AddScoped<IFileService, FileService>();
+            services.AddScoped<IStripeService, StripeService>();
             services.AddTransient<IEmailSender, EmailSender>();
             services.AddScoped<IInventoryNotificationService, InventoryNotificationService>();
             services.AddScoped<ISmsSender, SmsSender>();

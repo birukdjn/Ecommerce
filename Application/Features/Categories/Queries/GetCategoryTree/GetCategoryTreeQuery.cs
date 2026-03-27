@@ -4,5 +4,5 @@ using MediatR;
 
 namespace Application.Features.Categories.Queries.GetCategoryTree
 {
-    public record GetCategoryTreeQuery : IRequest<Result<List<CategoryDto>>>;
+    public record GetCategoryTreeQuery : IRequest<Result<List<CategoryTreeDto>>>;
 }
