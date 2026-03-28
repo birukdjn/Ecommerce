@@ -134,8 +134,6 @@ namespace Application.Templates.Email
                 </div>
             </div>";
 
-
-
         // 10. New Sale Alert (For Vendor)
         public static string GetNewSaleAlertEmail(string vendorName, string orderNumber, decimal amount) => $@"
             <div style='{ContainerStyle}'>
@@ -182,14 +180,6 @@ namespace Application.Templates.Email
                 <p>The funds should appear back on your original payment method within 5-10 business days.</p>
             </div>";
 
-        // 15. Admin Notification: New Vendor Application
-        public static string GetNewVendorApplicationEmail(string storeName, string vendorName) => $@"
-            <div style='{ContainerStyle}'>
-                <h2 style='color: {PrimaryColor};'>New Vendor Application</h2>
-                <p>A new vendor, <strong>{storeName}</strong> ({vendorName}), has applied to join the platform.</p>
-                <p>Please review their license and documentation in the Admin Portal.</p>
-            </div>";
-
         // 16. Refund Notification (For Customer)
         public static string GetRefundEmail(string name, string orderNumber, decimal amount, string status) => $@"
             <div style='{ContainerStyle}'>
@@ -198,5 +188,36 @@ namespace Application.Templates.Email
                 <p>The refund for Order <strong>#{orderNumber}</strong> in the amount of <strong>${amount:N2}</strong> has been {status.ToLower()}.</p>
                 <div style='{FooterStyle}'>It may take several days to appear on your bank statement.</div>
             </div>";
+
+        // 17. New Vendor Application (For Admin)
+        public static string GetNewVendorApplicationEmail(string storeName, string vendorName) => $@"
+    <div style='{ContainerStyle}'>
+        <h2 style='color: {PrimaryColor};'>New Vendor Application</h2>
+        <p>A new vendor, <strong>{storeName}</strong>, has applied to join the platform.</p>
+        <p><strong>Applicant:</strong> {vendorName}</p>
+        <p>Please log in to the Admin Portal to review their documents and approve or reject the request.</p>
+    </div>";
+
+        // 18. Vendor Approval (For Vendor)
+        public static string GetVendorApprovedEmail(string vendorName, string storeName) => $@"
+    <div style='{ContainerStyle}'>
+        <h2 style='color: #28a745;'>Welcome to the Marketplace!</h2>
+        <p>Hi {vendorName},</p>
+        <p>Your application for <strong>{storeName}</strong> has been approved!</p>
+        <p>You can now start adding products to your catalog and selling to customers.</p>
+        <div style='margin-top: 20px; text-align: center;'>
+            <a href='#' style='background: {PrimaryColor}; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;'>Go to Vendor Dashboard</a>
+        </div>
+    </div>";
+
+        // 19. Payout Success (For Vendor)
+        public static string GetPayoutSuccessEmail(string vendorName, decimal amount, string bankAccount) => $@"
+    <div style='{ContainerStyle}'>
+        <h2 style='color: #28a745;'>Payout Processed</h2>
+        <p>Hello {vendorName},</p>
+        <p>We've successfully processed your payout of <strong>${amount:N2}</strong>.</p>
+        <p><strong>Destination:</strong> {bankAccount}</p>
+        <p>The funds should appear in your account within 3 to 5 business days.</p>
+    </div>";
     }
 }

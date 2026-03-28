@@ -1,4 +1,5 @@
 using Application.Interfaces;
+using Application.Templates.Email;
 using Domain.Common;
 using Domain.Entities;
 using Domain.Enums;
@@ -8,11 +9,15 @@ using Microsoft.EntityFrameworkCore;
 namespace Application.Features.Admins.Commands.ProcessPayout
 {
 
-    public class ProcessPayoutHandler(IUnitOfWork unitOfWork)
+    public class ProcessPayoutHandler(IUnitOfWork unitOfWork, IJobService jobService, ICurrentUserService currentUserService)
         : IRequestHandler<ProcessPayoutCommand, Result<Unit>>
     {
         public async Task<Result<Unit>> Handle(ProcessPayoutCommand command, CancellationToken cancellationToken)
         {
+            if (!currentUserService.IsAdmin())
+                return Result<Unit>.Failure("Unauthorized");
+
+
             var payout = await unitOfWork.Repository<PayoutRequest>().Query()
                 .Include(p => p.Vendor).ThenInclude(v => v.Wallet)
                 .FirstOrDefaultAsync(p => p.Id == command.PayoutRequestId, cancellationToken);
@@ -46,6 +51,13 @@ namespace Application.Features.Admins.Commands.ProcessPayout
                     unitOfWork.Repository<WalletTransaction>().Add(refundTransaction);
                     unitOfWork.Repository<VendorWallet>().Update(wallet);
                 }
+
+                jobService.Enqueue<IEmailSender>(sender =>
+            sender.SendEmailAsync(
+                payout.Vendor.User.Email,
+                "Funds are on the way!",
+                EmailTemplates.GetPayoutSuccessEmail(payout.Vendor.User.FullName, payout.Amount, payout.BankReference)
+            ));
             }
 
             unitOfWork.Repository<PayoutRequest>().Update(payout);

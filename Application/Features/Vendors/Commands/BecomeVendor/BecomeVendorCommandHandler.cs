@@ -1,4 +1,5 @@
 ﻿using Application.Interfaces;
+using Application.Templates.Email;
 using Domain.Common;
 using Domain.Entities;
 using Domain.Enums;
@@ -7,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Application.Features.Vendors.Commands.BecomeVendor
 {
-    public class BecomeVendorCommandHandler(IApplicationDbContext context, ICurrentUserService currentUserService) : IRequestHandler<BecomeVendorCommand, Result<Guid>>
+    public class BecomeVendorCommandHandler(IApplicationDbContext context, ICurrentUserService currentUserService, IJobService jobService) : IRequestHandler<BecomeVendorCommand, Result<Guid>>
     {
 
         public async Task<Result<Guid>> Handle(BecomeVendorCommand request, CancellationToken cancellationToken)
@@ -64,6 +65,15 @@ namespace Application.Features.Vendors.Commands.BecomeVendor
 
                 await context.SaveChangesAsync(cancellationToken);
                 await transaction.CommitAsync(cancellationToken);
+
+                var adminEmail = "birukedjn@gmail.com";
+
+                jobService.Enqueue<IEmailSender>(sender =>
+                    sender.SendEmailAsync(
+                        adminEmail,
+                        "New Vendor Application Received",
+                        EmailTemplates.GetNewVendorApplicationEmail(vendor.StoreName, user.FullName)
+                    ));
 
                 return Result<Guid>.Success(vendor.Id);
             }

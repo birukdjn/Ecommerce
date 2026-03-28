@@ -1,4 +1,5 @@
 ﻿using Application.Interfaces;
+using Application.Templates.Email;
 using Domain.Common;
 using Domain.Constants;
 using Domain.Entities;
@@ -12,10 +13,15 @@ namespace Application.Features.Admins.Commands.ApproveVendor
 {
     public class ApproveVendorHandler(
         IApplicationDbContext context,
+        IJobService jobService,
+        ICurrentUserService currentUserService,
         UserManager<ApplicationUser> userManager) : IRequestHandler<ApproveVendorCommand, Result<bool>>
     {
         public async Task<Result<bool>> Handle(ApproveVendorCommand command, CancellationToken cancellationToken)
         {
+            if (!currentUserService.IsAdmin())
+                return Result<bool>.Failure("Unauthorized");
+
             var vendor = await context.Vendors
                 .IgnoreQueryFilters()
                 .Include(v => v.User)
@@ -29,6 +35,14 @@ namespace Application.Features.Admins.Commands.ApproveVendor
 
 
             vendor.Status = VendorStatus.Active;
+
+
+            jobService.Enqueue<IEmailSender>(sender =>
+                sender.SendEmailAsync(
+                    vendor.User.Email,
+                    "Your Store is Live!",
+                    EmailTemplates.GetVendorApprovedEmail(vendor.User.FullName, vendor.StoreName)
+                ));
 
             if (vendor.User != null)
             {
