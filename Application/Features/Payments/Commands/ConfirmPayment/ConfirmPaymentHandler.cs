@@ -1,4 +1,5 @@
 using Application.Interfaces;
+using Application.Templates.Email;
 using Domain.Common;
 using Domain.Entities;
 using Domain.Enums;
@@ -12,7 +13,8 @@ namespace Application.Features.Payments.Commands.ConfirmPayment
     public class ConfirmPaymentHandler(
         IUnitOfWork unitOfWork,
         IStripeService stripeService,
-        IApplicationDbContext context
+        IApplicationDbContext context,
+        IJobService jobService
     ) : IRequestHandler<ConfirmPaymentCommand, Result>
     {
         public async Task<Result> Handle(ConfirmPaymentCommand request, CancellationToken cancellationToken)
@@ -38,6 +40,7 @@ namespace Application.Features.Payments.Commands.ConfirmPayment
                 // 3️⃣ Load order with related SubOrders & Wallets
                 var order = await unitOfWork.Repository<Order>()
                     .Query()
+                    .Include(o => o.Customer)
                     .Include(o => o.SubOrders)
                         .ThenInclude(so => so.Vendor)
                             .ThenInclude(v => v.Wallet)
@@ -100,6 +103,30 @@ namespace Application.Features.Payments.Commands.ConfirmPayment
 
                 // 9️⃣ Commit transaction
                 await transaction.CommitAsync(cancellationToken);
+
+
+                // Notify Customer (Buyer)
+                jobService.Enqueue<IEmailSender>(sender =>
+                    sender.SendEmailAsync(
+                        order.Customer.Email,
+                        $"Payment Received - Order #{order.OrderNumber}",
+                        EmailTemplates.GetOrderConfirmationEmail(order.Customer.FullName, order.OrderNumber, order.TotalAmount)
+                    ));
+
+                // Notify each Vendor involved
+                foreach (var subOrder in order.SubOrders)
+                {
+                    var vendorEmail = subOrder.Vendor.User.Email;
+                    var vendorName = subOrder.Vendor.StoreName;
+                    var vendorAmount = subOrder.SubTotal - subOrder.PlatformCommission;
+
+                    jobService.Enqueue<IEmailSender>(sender =>
+                        sender.SendEmailAsync(
+                            vendorEmail,
+                            "New Sale Alert!",
+                            EmailTemplates.GetNewSaleAlertEmail(vendorName, order.OrderNumber, vendorAmount)
+                        ));
+                }
 
                 return Result.Success();
             }

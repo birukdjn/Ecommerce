@@ -1,4 +1,6 @@
+using System.Security.AccessControl;
 using Application.Interfaces;
+using Application.Templates.Email;
 using Domain.Common;
 using Domain.Entities;
 using Domain.Enums;
@@ -7,7 +9,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Application.Features.Orders.Commands.UpdateSubOrderStatus
 {
-    public class UpdateSubOrderStatusHandler(IUnitOfWork unitOfWork, ICurrentUserService currentUserService)
+    public class UpdateSubOrderStatusHandler(IUnitOfWork unitOfWork, ICurrentUserService currentUserService,
+        IJobService jobService)
         : IRequestHandler<UpdateSubOrderStatusCommand, Result<Unit>>
     {
         public async Task<Result<Unit>> Handle(UpdateSubOrderStatusCommand command, CancellationToken cancellationToken)
@@ -23,18 +26,33 @@ namespace Application.Features.Orders.Commands.UpdateSubOrderStatus
 
             var subOrder = await subOrderRepo.Query()
                 .Include(s => s.MasterOrder)
+                .ThenInclude(o => o.Customer)
+                .Include(s => s.Vendor)
                 .FirstOrDefaultAsync(s => s.Id == command.SubOrderId && s.VendorId == vendorId, cancellationToken);
 
             if (subOrder == null) return Result<Unit>.Failure("Sub-order not found.");
 
-            if (subOrder.Status == SubOrderStatus.Delivered && command.NewStatus == SubOrderStatus.Delivered)
+            if (subOrder.Status == command.NewStatus)
                 return Result<Unit>.Success(Unit.Value);
 
             subOrder.Status = command.NewStatus;
             subOrderRepo.Update(subOrder);
 
-            if (command.NewStatus == SubOrderStatus.Delivered)
+            if (command.NewStatus == SubOrderStatus.Shipped)
             {
+                var order = subOrder.MasterOrder;
+                var customer = order.Customer;
+                var vendor = subOrder.Vendor;
+                if (customer != null && !string.IsNullOrEmpty(customer.Email))
+                {
+                    jobService.Enqueue<IEmailSender>(sender =>
+                        sender.SendEmailAsync(
+                            customer.Email,
+                            $"Your items from Order #{order.OrderNumber} have shipped!",
+                            EmailTemplates.GetOrderShippedEmail(customer.FullName ?? "Customer", order.OrderNumber, vendor.StoreName)
+                        ));
+                }
+
                 var wallet = await vendorWalletRepo.Query()
                     .FirstOrDefaultAsync(w => w.VendorId == vendorId, cancellationToken);
 

@@ -16,8 +16,8 @@ namespace Application.Templates.Email
                     If you didn't sign up for this account, please ignore this email.
                 </div>
             </div>";
-            
-             public static string GetRegistrationEmail(string name) => $@"
+
+        public static string GetRegistrationEmail(string name) => $@"
             <div style='{ContainerStyle}'>
                 <h2 style='color: {PrimaryColor};'>Welcome, {name}!</h2>
                 <p>Thank you for joining our platform. Your account is not active.</p>
@@ -75,7 +75,7 @@ namespace Application.Templates.Email
                 </div>
             </div>";
 
-            // 5. Product Approval Notification for Vendor
+        // 5. Product Approval Notification for Vendor
         public static string GetProductApprovedEmail(string vendorName, string productName) => $@"
             <div style='{ContainerStyle}'>
                 <h2 style='color: #28a745;'>Product Approved!</h2>
@@ -87,52 +87,116 @@ namespace Application.Templates.Email
                 </div>
             </div>";
 
-            // 6. Product Rejected Notification for Vendor
-public static string GetProductRejectedEmail(string vendorName, string productName, string reason) => $@"
-    <div style='{ContainerStyle}'>
-        <h2 style='color: #dc3545;'>Product Update: Action Required</h2>
-        <p>Hello {vendorName},</p>
-        <p>Your product <strong>{productName}</strong> was reviewed by our team and, unfortunately, it could not be approved at this time.</p>
-        <div style='background-color: #fff5f5; border-left: 4px solid #dc3545; padding: 15px; margin: 20px 0;'>
-            <strong>Reason for Rejection:</strong><br/>
-            {reason}
-        </div>
-        <p>Please update the product details based on the feedback above and resubmit it for approval.</p>
-        <div style='{FooterStyle}'>
-            If you have questions, please reply to this email.
-        </div>
-    </div>";
+        // 6. Product Rejected Notification for Vendor
+        public static string GetProductRejectedEmail(string vendorName, string productName, string reason) => $@"
+            <div style='{ContainerStyle}'>
+                <h2 style='color: #dc3545;'>Product Update: Action Required</h2>
+                <p>Hello {vendorName},</p>
+                <p>Your product <strong>{productName}</strong> was reviewed by our team and, unfortunately, it could not be approved at this time.</p>
+                <div style='background-color: #fff5f5; border-left: 4px solid #dc3545; padding: 15px; margin: 20px 0;'>
+                    <strong>Reason for Rejection:</strong><br/>
+                    {reason}
+                </div>
+                <p>Please update the product details based on the feedback above and resubmit it for approval.</p>
+                <div style='{FooterStyle}'>
+                    If you have questions, please reply to this email.
+                </div>
+            </div>";
 
-    // 8. Product Submission Confirmation
-public static string GetProductSubmittedEmail(string vendorName, string productName) => $@"
-    <div style='{ContainerStyle}'>
-        <h2 style='color: {PrimaryColor};'>Product Received!</h2>
-        <p>Hello {vendorName},</p>
-        <p>Your product <strong>{productName}</strong> has been successfully added to your catalog.</p>
-        <div style='background-color: #e7f3ff; border-left: 4px solid {PrimaryColor}; padding: 15px; margin: 20px 0;'>
-            <strong>Status: Pending Approval</strong><br/>
-            Our administrators will review the details shortly. You will receive another notification once it is live on the store.
-        </div>
-        <p>In the meantime, you can continue managing your other products from your dashboard.</p>
-        <div style='{FooterStyle}'>
-            Thank you for selling with us!
-        </div>
-    </div>";
+        // 8. Product Submission Confirmation
+        public static string GetProductSubmittedEmail(string vendorName, string productName) => $@"
+            <div style='{ContainerStyle}'>
+                <h2 style='color: {PrimaryColor};'>Product Received!</h2>
+                <p>Hello {vendorName},</p>
+                <p>Your product <strong>{productName}</strong> has been successfully added to your catalog.</p>
+                <div style='background-color: #e7f3ff; border-left: 4px solid {PrimaryColor}; padding: 15px; margin: 20px 0;'>
+                    <strong>Status: Pending Approval</strong><br/>
+                    Our administrators will review the details shortly. You will receive another notification once it is live on the store.
+                </div>
+                <p>In the meantime, you can continue managing your other products from your dashboard.</p>
+                <div style='{FooterStyle}'>
+                    Thank you for selling with us!
+                </div>
+            </div>";
 
-    // 9. Low Stock Alert
-public static string GetLowStockEmail(string vendorName, string productName, int currentStock) => $@"
-    <div style='{ContainerStyle}'>
-        <h2 style='color: #e67e22;'>Low Stock Warning</h2>
-        <p>Hello {vendorName},</p>
-        <p>This is an automated alert to inform you that your inventory for <strong>{productName}</strong> is running low.</p>
-        <div style='background-color: #fff4e5; border: 1px solid #e67e22; padding: 15px; text-align: center; border-radius: 4px;'>
-            <span style='font-size: 18px;'>Current Stock: <strong>{currentStock}</strong></span>
-        </div>
-        <p>To avoid losing potential sales, please restock this item as soon as possible.</p>
-        <div style='{FooterStyle}'>
-            You can update your stock levels in the Vendor Portal.
-        </div>
-    </div>";
+        // 9. Low Stock Alert
+        public static string GetLowStockEmail(string vendorName, string productName, int currentStock) => $@"
+            <div style='{ContainerStyle}'>
+                <h2 style='color: #e67e22;'>Low Stock Warning</h2>
+                <p>Hello {vendorName},</p>
+                <p>This is an automated alert to inform you that your inventory for <strong>{productName}</strong> is running low.</p>
+                <div style='background-color: #fff4e5; border: 1px solid #e67e22; padding: 15px; text-align: center; border-radius: 4px;'>
+                    <span style='font-size: 18px;'>Current Stock: <strong>{currentStock}</strong></span>
+                </div>
+                <p>To avoid losing potential sales, please restock this item as soon as possible.</p>
+                <div style='{FooterStyle}'>
+                    You can update your stock levels in the Vendor Portal.
+                </div>
+            </div>";
 
+
+
+        // 10. New Sale Alert (For Vendor)
+        public static string GetNewSaleAlertEmail(string vendorName, string orderNumber, decimal amount) => $@"
+            <div style='{ContainerStyle}'>
+                <h2 style='color: #28a745;'>You made a sale!</h2>
+                <p>Hello {vendorName},</p>
+                <p>A customer has just purchased items from your store. Order <strong>#{orderNumber}</strong> is ready for processing.</p>
+                <div style='background-color: #f9f9f9; padding: 15px; border: 1px solid #ddd;'>
+                    <strong>Amount to be credited:</strong> ${amount:N2}
+                </div>
+                <p>Please log in to your dashboard to view shipping details.</p>
+            </div>";
+
+        // 11. Payout Processed (For Vendor)
+        public static string GetPayoutProcessedEmail(string vendorName, decimal amount) => $@"
+            <div style='{ContainerStyle}'>
+                <h2 style='color: {PrimaryColor};'>Funds Dispatched</h2>
+                <p>Hi {vendorName},</p>
+                <p>We've processed your payout of <strong>${amount:N2}</strong>. The funds should appear in your account within 3-5 business days.</p>
+            </div>";
+
+        // 12. Payout Requested (For Admin)
+        public static string GetPayoutRequestedAdminEmail(string vendorName, decimal amount) => $@"
+            <div style='{ContainerStyle}'>
+                <h2 style='color: {PrimaryColor};'>New Payout Request</h2>
+                <p>Vendor <strong>{vendorName}</strong> has requested a payout of <strong>${amount:N2}</strong>.</p>
+                <p>Please review the vendor's wallet and transaction history in the Admin Finance panel.</p>
+            </div>";
+
+        // 13. Order Shipped (For Customer)
+        public static string GetOrderShippedEmail(string customerName, string orderNumber, string vendorName) => $@"
+            <div style='{ContainerStyle}'>
+                <h2 style='color: {PrimaryColor};'>Your Order is on the Way!</h2>
+                <p>Hi {customerName},</p>
+                <p>Great news! <strong>{vendorName}</strong> has shipped your items from Order <strong>#{orderNumber}</strong>.</p>
+                <p>You can track your package details in your account dashboard.</p>
+            </div>";
+
+        // 14. Refund Processed (For Customer)
+        public static string GetRefundProcessedEmail(string name, string orderNumber, decimal amount) => $@"
+            <div style='{ContainerStyle}'>
+                <h2 style='color: #6c757d;'>Refund Processed</h2>
+                <p>Hi {name},</p>
+                <p>A refund of <strong>${amount:N2}</strong> for Order <strong>#{orderNumber}</strong> has been successfully processed.</p>
+                <p>The funds should appear back on your original payment method within 5-10 business days.</p>
+            </div>";
+
+        // 15. Admin Notification: New Vendor Application
+        public static string GetNewVendorApplicationEmail(string storeName, string vendorName) => $@"
+            <div style='{ContainerStyle}'>
+                <h2 style='color: {PrimaryColor};'>New Vendor Application</h2>
+                <p>A new vendor, <strong>{storeName}</strong> ({vendorName}), has applied to join the platform.</p>
+                <p>Please review their license and documentation in the Admin Portal.</p>
+            </div>";
+
+        // 16. Refund Notification (For Customer)
+        public static string GetRefundEmail(string name, string orderNumber, decimal amount, string status) => $@"
+            <div style='{ContainerStyle}'>
+                <h2 style='color: #6c757d;'>Refund Update: {status}</h2>
+                <p>Hi {name},</p>
+                <p>The refund for Order <strong>#{orderNumber}</strong> in the amount of <strong>${amount:N2}</strong> has been {status.ToLower()}.</p>
+                <div style='{FooterStyle}'>It may take several days to appear on your bank statement.</div>
+            </div>";
     }
 }
