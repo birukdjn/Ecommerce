@@ -135,6 +135,11 @@ namespace Api
                     service => service.CheckLowStockAndNotifyVendors(),
                     Cron.Daily(8)
                );
+
+                jobService.AddOrUpdateRecurring<IInventoryNotificationService>(
+                "release-expired-stock",
+                service => service.ReleaseExpiredUnpaidOrders(),
+                "*/5 * * * *");
             }
             return app;
         }

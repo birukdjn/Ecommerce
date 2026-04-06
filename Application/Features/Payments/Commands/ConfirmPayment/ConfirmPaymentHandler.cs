@@ -43,11 +43,17 @@ namespace Application.Features.Payments.Commands.ConfirmPayment
                     .Include(o => o.Customer)
                     .Include(o => o.SubOrders)
                         .ThenInclude(so => so.Vendor)
+                            .ThenInclude(v => v.User)
+                    .Include(o => o.SubOrders)
+                        .ThenInclude(so => so.Vendor)
                             .ThenInclude(v => v.Wallet)
                     .FirstOrDefaultAsync(o => o.Id == request.OrderId, cancellationToken);
 
                 if (order == null)
                     return Result.Failure("Order not found");
+
+                if (order.Status == OrderStatus.Cancelled)
+                    return Result.Failure("Order was cancelled");
 
                 if (order.PaymentStatus == PaymentStatus.Paid)
                     return Result.Success();
@@ -108,15 +114,15 @@ namespace Application.Features.Payments.Commands.ConfirmPayment
                 // Notify Customer (Buyer)
                 jobService.Enqueue<IEmailSender>(sender =>
                     sender.SendEmailAsync(
-                        order.Customer.Email,
+                        order.Customer.Email!,
                         $"Payment Received - Order #{order.OrderNumber}",
-                        EmailTemplates.GetOrderConfirmationEmail(order.Customer.FullName, order.OrderNumber, order.TotalAmount)
+                        EmailTemplates.GetOrderConfirmationEmail(order.Customer.FullName!, order.OrderNumber, order.TotalAmount)
                     ));
 
                 // Notify each Vendor involved
                 foreach (var subOrder in order.SubOrders)
                 {
-                    var vendorEmail = subOrder.Vendor.User.Email;
+                    var vendorEmail = subOrder.Vendor.User.Email!;
                     var vendorName = subOrder.Vendor.StoreName;
                     var vendorAmount = subOrder.SubTotal - subOrder.PlatformCommission;
 

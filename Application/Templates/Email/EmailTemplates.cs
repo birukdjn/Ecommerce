@@ -219,5 +219,13 @@ namespace Application.Templates.Email
         <p><strong>Destination:</strong> {bankAccount}</p>
         <p>The funds should appear in your account within 3 to 5 business days.</p>
     </div>";
+
+        public static string GetOrderExpiredEmail(string name, string orderNumber) => $@"
+    <div style='{ContainerStyle}'>
+        <h2 style='color: #dc3545;'>Order Expired</h2>
+        <p>Hi {name},</p>
+        <p>The payment window for your Order <strong>#{orderNumber}</strong> has closed.</p>
+        <p>The items have been returned to our inventory. If you still want these items, please place a new order.</p>
+    </div>";
     }
 }

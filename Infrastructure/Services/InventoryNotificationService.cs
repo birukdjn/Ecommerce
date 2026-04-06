@@ -8,7 +8,8 @@ namespace Infrastructure.Services
 {
     public class InventoryNotificationService(
         IUnitOfWork unitOfWork,
-        IEmailSender emailSender):IInventoryNotificationService
+        IJobService jobService,
+        IEmailSender emailSender) : IInventoryNotificationService
     {
         public async Task CheckLowStockAndNotifyVendors()
         {
@@ -36,6 +37,45 @@ namespace Infrastructure.Services
                     );
                 }
             }
+        }
+
+        public async Task ReleaseExpiredUnpaidOrders()
+        {
+            var expirationTime = DateTime.UtcNow.AddMinutes(-15);
+
+            var expiredOrders = await unitOfWork.Repository<Order>().Query()
+                .Include(o => o.Customer)
+                .Include(o => o.OrderItems)
+                    .ThenInclude(oi => oi.Product)
+                .Where(o => o.PaymentStatus == PaymentStatus.Pending &&
+                            o.CreatedAt <= expirationTime &&
+                            o.Status == OrderStatus.Pending)
+                .ToListAsync();
+
+            if (!expiredOrders.Any()) return;
+
+            foreach (var order in expiredOrders)
+            {
+                foreach (var item in order.OrderItems)
+                {
+                    var product = item.Product;
+                    product.StockQuantity += item.Quantity;
+                    unitOfWork.Repository<Product>().Update(product);
+                }
+
+                order.Status = OrderStatus.Cancelled;
+                unitOfWork.Repository<Order>().Update(order);
+
+
+
+                jobService.Enqueue<IEmailSender>(s => s.SendEmailAsync(
+                    order.Customer.Email!,
+                    $"Order #{order.OrderNumber} Expired",
+                    EmailTemplates.GetOrderExpiredEmail(order.Customer.FullName!, order.OrderNumber)
+                ));
+            }
+
+            await unitOfWork.Complete();
         }
     }
 }

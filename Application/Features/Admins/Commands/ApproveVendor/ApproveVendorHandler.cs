@@ -39,9 +39,9 @@ namespace Application.Features.Admins.Commands.ApproveVendor
 
             jobService.Enqueue<IEmailSender>(sender =>
                 sender.SendEmailAsync(
-                    vendor.User.Email,
+                    vendor.User.Email!,
                     "Your Store is Live!",
-                    EmailTemplates.GetVendorApprovedEmail(vendor.User.FullName, vendor.StoreName)
+                    EmailTemplates.GetVendorApprovedEmail(vendor.User.FullName!, vendor.StoreName)
                 ));
 
             if (vendor.User != null)

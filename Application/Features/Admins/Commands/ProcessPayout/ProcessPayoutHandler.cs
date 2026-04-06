@@ -54,9 +54,9 @@ namespace Application.Features.Admins.Commands.ProcessPayout
 
                 jobService.Enqueue<IEmailSender>(sender =>
             sender.SendEmailAsync(
-                payout.Vendor.User.Email,
+                payout.Vendor.User.Email!,
                 "Funds are on the way!",
-                EmailTemplates.GetPayoutSuccessEmail(payout.Vendor.User.FullName, payout.Amount, payout.BankReference)
+                EmailTemplates.GetPayoutSuccessEmail(payout.Vendor.User.FullName!, payout.Amount, payout.BankReference!)
             ));
             }
 

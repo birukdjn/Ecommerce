@@ -50,7 +50,7 @@ namespace Api.Controllers.Payment
 
                         if (Guid.TryParse(orderIdStr, out var orderId))
                         {
-                            await _mediator.Send(new ConfirmPaymentCommand(orderId, session.Id));
+                            await _mediator.Send(new ConfirmPaymentCommand(orderId, session!.Id));
                         }
                         break;
 

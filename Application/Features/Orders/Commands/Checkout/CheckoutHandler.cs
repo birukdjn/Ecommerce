@@ -59,7 +59,7 @@ namespace Application.Features.Orders.Commands.Checkout
                     CustomerId = userId.Value,
                     OrderNumber = $"ORD-{userId.Value.ToString()[..4].ToUpper()}-{DateTime.UtcNow.Ticks}",
                     TotalAmount = selectedItems.Sum(x => x.Quantity * x.UnitPrice),
-                    Status = OrderStatus.pending,
+                    Status = OrderStatus.Pending,
                     PaymentStatus = PaymentStatus.Pending,
                     ShippingFullName = addr.FullName,
                     ShippingPhoneNumber = addr.Phone,

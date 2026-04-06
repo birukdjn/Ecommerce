@@ -72,7 +72,7 @@ namespace Application.Features.Vendors.Commands.BecomeVendor
                     sender.SendEmailAsync(
                         adminEmail,
                         "New Vendor Application Received",
-                        EmailTemplates.GetNewVendorApplicationEmail(vendor.StoreName, user.FullName)
+                        EmailTemplates.GetNewVendorApplicationEmail(vendor.StoreName, user.FullName!)
                     ));
 
                 return Result<Guid>.Success(vendor.Id);
