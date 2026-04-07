@@ -121,13 +121,16 @@ Update `appsettings.json` or use environment variables:
 dotnet ef database update
 ```
 
-### 4. Run with Docker
+### 4. Run Locally (Options)
+Option 1: Using Docker
 ```bash
 docker-compose up --build
 ```
-### 5. Run Locally
+Option 1: Using dotnet run
 ```bash
-dotnet run
+dotnet restore
+dotnet build
+dotnet run --project Api
 ```
 ## 📂 Project Structure
 
