@@ -122,16 +122,18 @@ dotnet ef database update
 ```
 
 ### 4. Run Locally (Options)
-Option 1: Using Docker
+*Option 1: Using Docker*
 ```bash
 docker-compose up --build
 ```
-Option 1: Using dotnet run
+*Option 2: Using dotnet run*
 ```bash
 dotnet restore
 dotnet build
 dotnet run --project Api
 ```
+After running, Swagger UI is available at `http://localhost:5188/swagger` or `https://localhost:7023/swagger`
+
 ## 📂 Project Structure
 
 ```bash
