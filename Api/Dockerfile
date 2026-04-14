@@ -1,30 +1,28 @@
-# STAGE 1: Build
+# Stage 1: Build
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
-# Copy project files for caching restore layer
+# Copy all csproj files to maintain Clean Architecture dependencies
 COPY ["Api/Api.csproj", "Api/"]
 COPY ["Application/Application.csproj", "Application/"]
 COPY ["Domain/Domain.csproj", "Domain/"]
 COPY ["Infrastructure/Infrastructure.csproj", "Infrastructure/"]
 
-# Restore
-RUN dotnet restore "./Api/Api.csproj"
+# Restore using the Api project as the entry point
+RUN dotnet restore "Api/Api.csproj"
 
-# Copy everything else
+# Copy the entire source code
 COPY . .
 
-# Build
+# Build the Api project
 WORKDIR "/src/Api"
-RUN dotnet build "Api.csproj" -c Release -o /app/build
+# RUN dotnet publish "Api.csproj" -c Release -o /app/publish --no-restore
+RUN dotnet publish "Api.csproj" -c Release -o /app/publish --no-restore -p:GenerateResourceMSBuildArchives=false
 
-# STAGE 2: Publish
-FROM build AS publish
-RUN dotnet publish "Api.csproj" -c Release -o /app/publish /p:UseAppHost=false
-
-# STAGE 3: Final Runtime
+# Stage 3: Final Runtime
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 EXPOSE 8080
-COPY --from=publish /app/publish .
+
+COPY --from=build /app/publish .
 ENTRYPOINT ["dotnet", "Api.dll"]

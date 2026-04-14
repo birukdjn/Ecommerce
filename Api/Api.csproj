@@ -7,6 +7,9 @@
     <UserSecretsId>7a99abbb-fe1c-431b-874d-ffb3aaa7a255</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <AllowMissingPrunePackageData>true</AllowMissingPrunePackageData>
+    <EnableDefaultItems>true</EnableDefaultItems>
+     <GenerateResourceMSBuildArchives>false</GenerateResourceMSBuildArchives>
+    <EnableDefaultEmbeddedResourceItems>false</EnableDefaultEmbeddedResourceItems>
   </PropertyGroup>
 
   <ItemGroup>
