@@ -16,13 +16,13 @@ COPY . .
 
 # Build the Api project
 WORKDIR "/src/Api"
-# RUN dotnet publish "Api.csproj" -c Release -o /app/publish --no-restore
-RUN dotnet publish "Api.csproj" -c Release -o /app/publish --no-restore -p:GenerateResourceMSBuildArchives=false
+RUN dotnet publish "Api.csproj" -c Release -o /app/publish --no-restore
 
-# Stage 3: Final Runtime
+# Stage 2: Final Runtime
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
 EXPOSE 8080
+ENV ASPNETCORE_URLS=http://+:8080
 
 COPY --from=build /app/publish .
 ENTRYPOINT ["dotnet", "Api.dll"]
