@@ -62,6 +62,12 @@ namespace Infrastructure
 
             services.AddScoped<ICurrentUserService, CurrentUserService>();
 
+            services.AddStackExchangeRedisCache(options =>
+                {
+                    options.Configuration = configuration.GetConnectionString("Redis");
+                    options.InstanceName = "Ecommerce_";
+                });
+
             // Configure options
             services.AddOptions<DatabaseOptions>()
                 .Bind(databaseSection)
