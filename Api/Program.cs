@@ -3,7 +3,8 @@ using Application;
 using Domain.Entities;
 using Infrastructure;
 using Infrastructure.Identity;
-
+using Microsoft.EntityFrameworkCore;
+using Infrastructure.Context;
 
 public partial class Program
 {
@@ -21,8 +22,6 @@ public partial class Program
             .AddApplicationServices()
             .AddInfrastructureServices(builder.Configuration);
 
-
-
         var app = builder.Build();
 
         using (var scope = app.Services.CreateScope())
@@ -30,11 +29,17 @@ public partial class Program
             var services = scope.ServiceProvider;
             try
             {
+                var context = services.GetRequiredService<ApplicationDbContext>();
+                if (context.Database.IsRelational())
+                {
+                    await context.Database.MigrateAsync();
+                }
+
                 await IdentityDataSeeder.SeedAllAsync(services);
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"An error occurred seeding the DB: {ex.Message}");
+                Console.WriteLine($"An error occurred during DB migration or seeding: {ex.Message}");
             }
         }
 

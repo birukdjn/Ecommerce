@@ -10,12 +10,24 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U Birukdjn -d ecommerce"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: always
 
   # The Redis Cache
   cache:
     image: redis:alpine
     ports:
       - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: always
 
   # Your .NET 10 API
   api:
@@ -29,8 +41,11 @@ services:
       - DatabaseOptions__ConnectionString=Host=db;Port=5432;Database=ecommerce;Username=Birukdjn;Password=Birukdjn@8325
       - ConnectionStrings__Redis=cache:6379
     depends_on:
-      - db
-      - cache
+      db:
+        condition: service_healthy
+      cache:
+        condition: service_healthy
+    restart: always
 
 volumes:
   postgres_data:
